@@ -124,7 +124,13 @@ class ImageProxyService {
         railwayUrl
       });
     } else {
-     railwayUrl = process.env.RAILWAY_STATIC_URL || 'https://netakhoj-web-production.up.railway.app';
+      railwayUrl = process.env.RAILWAY_STATIC_URL || 'https://netakhoj-web-production.up.railway.app';
+      
+      // Ensure protocol is present
+      if (railwayUrl && !railwayUrl.startsWith('http')) {
+        railwayUrl = `https://${railwayUrl}`;
+      }
+
       logger.info('PROXY-ENV', 'Using production URL', {
         env: process.env.NODE_ENV,
         parsedEnv: env,
