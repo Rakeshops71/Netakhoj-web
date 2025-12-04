@@ -29,24 +29,24 @@ const router = express.Router();
 // ============================================================================
 
 function logAppwriteResponse(functionName, params, response) {
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    functionName,
-    params,
-    response,
-    responseSize: JSON.stringify(response).length
-  };
+  try {
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      functionName,
+      params,
+      response,
+      responseSize: JSON.stringify(response).length
+    };
 
-  const logPath = path.join(__dirname, '..', 'appwriteresponse.txt');
-  const logLine = `\n${'='.repeat(80)}\n${JSON.stringify(logEntry, null, 2)}\n`;
+    const logPath = path.join(__dirname, '..', 'logs', 'appwriteresponse.txt');
+    const logLine = `\n${'='.repeat(80)}\n${JSON.stringify(logEntry, null, 2)}\n`;
 
-  fs.appendFileSync(logPath, logLine, 'utf8');
-  console.log(`[APPWRITE] ${functionName} - Response logged to appwriteresponse.txt`);
+    fs.appendFileSync(logPath, logLine, 'utf8');
+    console.log(`[APPWRITE] ${functionName} - Response logged to logs/appwriteresponse.txt`);
+  } catch (error) {
+    console.error(`[APPWRITE] Failed to log response: ${error.message}`);
+  }
 }
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
 
 const CONFIG = {
   TIMEOUTS: {
