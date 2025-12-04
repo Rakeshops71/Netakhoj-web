@@ -3,6 +3,9 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
+import fetch from 'node-fetch';
+import https from 'https';
+import http from 'http';
 
 import { memberQueryValidator, candidateQueryValidator } from '../middleware/validator.js';
 import { scraperLimiter } from '../middleware/rateLimiter.js';
@@ -99,9 +102,23 @@ const createTimeoutPromise = (ms, errorMsg) =>
 // SMART DATA MERGER
 // ============================================================================
 
+// Force IPv4 to avoid IPv6 timeouts on Railway
+const httpsAgent = new https.Agent({
+  family: 4,
+  keepAlive: true,
+  keepAliveMsecs: 1000,
+});
+
+const httpAgent = new http.Agent({
+  family: 4,
+  keepAlive: true,
+  keepAliveMsecs: 1000,
+});
+
 async function fetchWithRetry(url, options, retries = 3, backoff = 1000) {
   try {
-    const response = await fetch(url, options);
+    const agent = url.startsWith('https') ? httpsAgent : httpAgent;
+    const response = await fetch(url, { ...options, agent });
     if (!response.ok && response.status >= 500) {
       throw new Error(`Server error: ${response.status}`);
     }
