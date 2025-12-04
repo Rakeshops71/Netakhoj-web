@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Member Profile | MP/MLA Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="member_detail.css">
+  <style>
+
+  </style>
+
+<body>
+  <div class="background-particles" id="particles"></div>
+
+  <div class="dashboard-container">
+    <div id="content"></div>
+  </div>
+  
+  <div id="loading-screen">
+    <div class="loader-content">
+      <div class="spinner-container">
+        <div class="spinner"></div>
+        <div class="spinner-icon" id="loader-icon">🏛️</div>
+      </div>
+      
+      <div class="loading-text" id="loading-text">Initializing Dashboard...</div>
+      <div class="loading-subtitle" id="loading-subtitle">Please wait while we prepare the data</div>
+      
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+      </div>
+      
+      <div class="loading-steps">
+        <div class="loading-step" id="step-1">📄</div>
+        <div class="loading-step" id="step-2">🏦</div>
+        <div class="loading-step" id="step-3">🚗</div>
+        <div class="loading-step" id="step-4">🏠</div>
+        <div class="loading-step" id="step-5">✅</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-buttons">
+    <button class="action-btn print" onclick="PDFGenerator.generate()" title="Generate PDF">
+  🖨️
+</button>
+    <button class="action-btn share" onclick="shareProfile()" title="Share Profile">
+      📤
+    </button>
+    <button class="action-btn top" id="backToTop" onclick="scrollToTop()" title="Back to Top" style="display: none;">
+      ⬆️
+    </button>
+  </div>
+
+<script src="pdf-generator.js"></script>
+  <script type="module" src="member_detail.js">
+  
+  </script>
+ 
+</body>
+</html>

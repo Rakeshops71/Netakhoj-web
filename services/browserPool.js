@@ -1,0 +1,41 @@
+// BrowserPool - DISABLED: Puppeteer removed from project
+// This service is no longer functional without Puppeteer dependency
+
+class BrowserPool {
+  constructor() {
+    this.browsers = [];
+    this.available = [];
+    this.busy = new Set();
+    this.maxBrowsers = 0; // Disabled
+    this.launching = 0;
+  }
+
+  async getBrowser() {
+    throw new Error('BrowserPool is disabled - Puppeteer dependency removed');
+  }
+
+  async launchBrowser() {
+    throw new Error('BrowserPool is disabled - Puppeteer dependency removed');
+  }
+
+  releaseBrowser(browser) {
+    // No-op
+  }
+
+  async closeAll() {
+    // No-op
+  }
+
+  getStats() {
+    return {
+      total: 0,
+      busy: 0,
+      available: 0,
+      launching: 0,
+      disabled: true,
+      reason: 'Puppeteer dependency removed'
+    };
+  }
+}
+
+export default new BrowserPool();
