@@ -622,25 +622,6 @@ router.get('/image/:imageId', async (req, res) => {
     if (!actualUrl) {
       console.warn(`[${requestId}] Invalid image ID: ${imageId}`);
       return res.status(404).json({ error: 'Image not found' });
-    }
-
-    console.log(`[${requestId}] Fetching image: ${imageId}`);
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
-
-    const response = await fetchWithRetry(actualUrl, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        'Connection': 'close'
-      }
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.status}`);
     }
 
