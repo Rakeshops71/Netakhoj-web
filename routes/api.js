@@ -99,6 +99,21 @@ const createTimeoutPromise = (ms, errorMsg) =>
 // SMART DATA MERGER
 // ============================================================================
 
+async function fetchWithRetry(url, options, retries = 3, backoff = 1000) {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok && response.status >= 500) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    if (retries <= 0 || error.name === 'AbortError') throw error;
+    console.log(`[Fetch] Retrying... attempts left: ${retries}. Error: ${error.message}`);
+    await new Promise(resolve => setTimeout(resolve, backoff));
+    return fetchWithRetry(url, options, retries - 1, backoff * 2);
+  }
+}
+
 function needsUpdate(value) {
   return !value ||
     value === 'N/A' ||
@@ -612,12 +627,14 @@ router.get('/image/:imageId', async (req, res) => {
     console.log(`[${requestId}] Fetching image: ${imageId}`);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 20000);
 
-    const response = await fetch(actualUrl, {
+    const response = await fetchWithRetry(actualUrl, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FixKaro/1.0)',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Connection': 'close'
       }
     });
 
@@ -937,64 +954,8 @@ router.get('/health', (req, res) => {
       total: (memUsage.heapTotal / 1024 / 1024).toFixed(2) + ' MB',
       percentage: ((memUsage.heapUsed / memUsage.heapTotal) * 100).toFixed(2) + '%',
     },
-    services: {
-      browser: browserPool.getStats(),
-      cache: cacheService.getStats(),
-      appwrite: getAppwriteStats(),
-      candidate: candidateService.getStats(),
-    },
-    storage: fileStorage.getStats(),
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString()
   });
-});
-
-router.post('/cache/clear', (req, res) => {
-  const { type } = req.query;
-
-  cacheService.flush(type);
-  candidateService.clearCache();
-
-  console.log('Cache cleared:', { type: type || 'all' });
-
-  res.json({
-    message: `Cache cleared: ${type || 'all'}`,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-router.get('/welcome', (req, res) => {
-  console.log('Welcome endpoint accessed');
-
-  res.json({
-    message: "Welcome to the FixKaro Web API!",
-    version: "3.0",
-    features: [
-      "Appwrite Node SDK integration",
-      "Dual SDK calls for complete data",
-      "Smart field-level merging",
-      "File-based caching with 24h TTL",
-      "Progressive data loading",
-      "Comprehensive logging"
-    ],
-    timestamp: new Date().toISOString(),
-  });
-});
-
-console.log('✅ API routes initialized with Appwrite SDK dual-call support');
-
-// ============================================================================
-// POLLING ENDPOINT
-// ============================================================================
-
-router.get('/prs/poll/:requestId', async (req, res) => {
-  const { requestId } = req.params;
-  const data = await cacheService.get('poll', requestId);
-
-  if (data) {
-    res.json({ ready: true, data });
-  } else {
-    res.json({ ready: false });
-  }
 });
 
 export default router;
