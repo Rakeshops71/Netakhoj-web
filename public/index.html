@@ -28,6 +28,23 @@
             user-select: text;
         }
     </style>
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function (e) {
+            if (e.keyCode == 123) {
+                return false;
+            }
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
+                return false;
+            }
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
+                return false;
+            }
+            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
+                return false;
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -219,15 +236,19 @@
         let currentProgress = 0;
         const progressBar = document.getElementById('progressBar');
 
+        let progressInterval;
         function updateProgress(target, checkpoint) {
-            const interval = setInterval(() => {
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
                 if (currentProgress < target) {
-                    currentProgress += 2;
+                    currentProgress += 5; // Faster update for smoother feel
+                    if (currentProgress > target) currentProgress = target;
                     progressBar.style.width = currentProgress + '%';
                 } else {
-                    clearInterval(interval);
+                    clearInterval(progressInterval);
                     if (checkpoint) {
-                        document.getElementById(checkpoint).classList.add('active');
+                        const el = document.getElementById(checkpoint);
+                        if (el) el.classList.add('active');
                     }
                 }
             }, 30);
@@ -270,6 +291,13 @@
 
         function switchMap(type) {
             if (currentMapType === type) return;
+
+            // Show loading overlay
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.classList.remove('hidden');
+            document.querySelector('.loader-text').textContent = 'Switching Map View...';
+            currentProgress = 0;
+            document.getElementById('progressBar').style.width = '0%';
 
             currentMapType = type;
 

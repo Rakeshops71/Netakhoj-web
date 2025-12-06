@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Member Profile | MP/MLA Dashboard</title>
@@ -8,6 +9,24 @@
   <style>
 
   </style>
+  <script>
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.onkeydown = function (e) {
+      if (e.keyCode == 123) {
+        return false;
+      }
+      if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
+        return false;
+      }
+      if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
+        return false;
+      }
+      if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
+        return false;
+      }
+    }
+  </script>
+</head>
 
 <body>
   <div class="background-particles" id="particles"></div>
@@ -15,21 +34,21 @@
   <div class="dashboard-container">
     <div id="content"></div>
   </div>
-  
+
   <div id="loading-screen">
     <div class="loader-content">
       <div class="spinner-container">
         <div class="spinner"></div>
         <div class="spinner-icon" id="loader-icon">🏛️</div>
       </div>
-      
+
       <div class="loading-text" id="loading-text">Initializing Dashboard...</div>
       <div class="loading-subtitle" id="loading-subtitle">Please wait while we prepare the data</div>
-      
+
       <div class="progress-bar-container">
         <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
       </div>
-      
+
       <div class="loading-steps">
         <div class="loading-step" id="step-1">📄</div>
         <div class="loading-step" id="step-2">🏦</div>
@@ -42,8 +61,8 @@
 
   <div class="action-buttons">
     <button class="action-btn print" onclick="PDFGenerator.generate()" title="Generate PDF">
-  🖨️
-</button>
+      🖨️
+    </button>
     <button class="action-btn share" onclick="shareProfile()" title="Share Profile">
       📤
     </button>
@@ -52,10 +71,34 @@
     </button>
   </div>
 
-<script src="pdf-generator.js"></script>
+  <script src="pdf-generator.js"></script>
   <script type="module" src="member_detail.js">
-  
+
   </script>
- 
+
+
+  <!-- Disclaimer Modal -->
+  <div id="disclaimer-modal" class="disclaimer-overlay">
+    <div class="disclaimer-box">
+      <div class="disclaimer-header">
+        <div class="disclaimer-icon">⚖️</div>
+        <h2>Data Transparency Notice</h2>
+      </div>
+      <div class="disclaimer-content">
+        <p>The information provided on this platform is aggregated from <strong>publicly available sources</strong> for
+          informational purposes only. </p>
+        <p>While we strive for accuracy, we cannot guarantee the complete correctness, currency, or reliability of the
+          data. <strong>NetaKhoj and its developers assume no responsibility or liability</strong> for any errors,
+          omissions, or discrepancies.</p>
+        <p>Users are advised to verify information independently and use their discretion. This platform does not
+          constitute an official record.</p>
+      </div>
+      <div class="disclaimer-footer">
+        <button id="accept-disclaimer" class="btn-primary">I Understand & Accept</button>
+      </div>
+    </div>
+  </div>
+
 </body>
+
 </html>

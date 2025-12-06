@@ -1,294 +1,294 @@
 
-    function createParticles() {
-      const particlesContainer = document.getElementById('particles');
-      if (!particlesContainer) return;
-      
-      const particleCount = 30;
-      
-      for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        
-        const size = Math.random() * 60 + 20;
-        const startX = Math.random() * window.innerWidth;
-        const duration = Math.random() * 20 + 15;
-        const delay = Math.random() * 5;
-        
-        particle.style.width = size + 'px';
-        particle.style.height = size + 'px';
-        particle.style.left = startX + 'px';
-        particle.style.animationDuration = duration + 's';
-        particle.style.animationDelay = delay + 's';
-        
-        particlesContainer.appendChild(particle);
+function createParticles() {
+  const particlesContainer = document.getElementById('particles');
+  if (!particlesContainer) return;
+
+  const particleCount = 30;
+
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+
+    const size = Math.random() * 60 + 20;
+    const startX = Math.random() * window.innerWidth;
+    const duration = Math.random() * 20 + 15;
+    const delay = Math.random() * 5;
+
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.left = startX + 'px';
+    particle.style.animationDuration = duration + 's';
+    particle.style.animationDelay = delay + 's';
+
+    particlesContainer.appendChild(particle);
+  }
+}
+
+// Scroll reveal animation
+function revealOnScroll() {
+  const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+
+  reveals.forEach(element => {
+    const elementTop = element.getBoundingClientRect().top;
+    const elementVisible = 150;
+
+    if (elementTop < window.innerHeight - elementVisible) {
+      element.classList.add('active');
+    }
+  });
+}
+
+// Add sparkles to quick stat items
+function addSparkles() {
+  const statItems = document.querySelectorAll('.quick-stat-item');
+
+  statItems.forEach(item => {
+    item.addEventListener('mouseenter', function (e) {
+      for (let i = 0; i < 6; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+
+        const tx = (Math.random() - 0.5) * 100;
+        const ty = (Math.random() - 0.5) * 100;
+
+        sparkle.style.setProperty('--tx', tx + 'px');
+        sparkle.style.setProperty('--ty', ty + 'px');
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.animationDelay = (Math.random() * 0.5) + 's';
+
+        this.appendChild(sparkle);
+
+        setTimeout(() => sparkle.remove(), 1000);
       }
-    }
+    });
+  });
+}
 
-    // Scroll reveal animation
-    function revealOnScroll() {
-      const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
-      
-      reveals.forEach(element => {
-        const elementTop = element.getBoundingClientRect().top;
-        const elementVisible = 150;
-        
-        if (elementTop < window.innerHeight - elementVisible) {
-          element.classList.add('active');
+// Animate counters
+function animateCounters() {
+  const counters = document.querySelectorAll('.quick-stat-value');
+
+  counters.forEach(counter => {
+    const text = counter.textContent;
+    const match = text.match(/[\d.]+/);
+
+    if (match) {
+      const endValue = parseFloat(match[0]);
+      const duration = 2000;
+      const startTime = Date.now();
+
+      function updateCounter() {
+        const currentTime = Date.now();
+        const progress = Math.min((currentTime - startTime) / duration, 1);
+        const easeProgress = 1 - Math.pow(1 - progress, 3);
+        const currentValue = (endValue * easeProgress).toFixed(text.includes('.') ? 2 : 0);
+
+        counter.textContent = text.replace(/[\d.]+/, currentValue);
+
+        if (progress < 1) {
+          requestAnimationFrame(updateCounter);
         }
-      });
-    }
-
-    // Add sparkles to quick stat items
-    function addSparkles() {
-      const statItems = document.querySelectorAll('.quick-stat-item');
-      
-      statItems.forEach(item => {
-        item.addEventListener('mouseenter', function(e) {
-          for (let i = 0; i < 6; i++) {
-            const sparkle = document.createElement('div');
-            sparkle.className = 'sparkle';
-            
-            const tx = (Math.random() - 0.5) * 100;
-            const ty = (Math.random() - 0.5) * 100;
-            
-            sparkle.style.setProperty('--tx', tx + 'px');
-            sparkle.style.setProperty('--ty', ty + 'px');
-            sparkle.style.left = Math.random() * 100 + '%';
-            sparkle.style.top = Math.random() * 100 + '%';
-            sparkle.style.animationDelay = (Math.random() * 0.5) + 's';
-            
-            this.appendChild(sparkle);
-            
-            setTimeout(() => sparkle.remove(), 1000);
-          }
-        });
-      });
-    }
-
-    // Animate counters
-    function animateCounters() {
-      const counters = document.querySelectorAll('.quick-stat-value');
-      
-      counters.forEach(counter => {
-        const text = counter.textContent;
-        const match = text.match(/[\d.]+/);
-        
-        if (match) {
-          const endValue = parseFloat(match[0]);
-          const duration = 2000;
-          const startTime = Date.now();
-          
-          function updateCounter() {
-            const currentTime = Date.now();
-            const progress = Math.min((currentTime - startTime) / duration, 1);
-            const easeProgress = 1 - Math.pow(1 - progress, 3);
-            const currentValue = (endValue * easeProgress).toFixed(text.includes('.') ? 2 : 0);
-            
-            counter.textContent = text.replace(/[\d.]+/, currentValue);
-            
-            if (progress < 1) {
-              requestAnimationFrame(updateCounter);
-            }
-          }
-          
-          counter.textContent = text.replace(/[\d.]+/, '0');
-          counter.classList.add('counting');
-          
-          setTimeout(() => {
-            updateCounter();
-          }, 500);
-        }
-      });
-    }
-
-    // 3D tilt effect for cards
-    function add3DTilt() {
-      const cards = document.querySelectorAll('.quick-stat-item, .card-item');
-      
-      cards.forEach(card => {
-        card.addEventListener('mousemove', function(e) {
-          const rect = this.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          
-          const centerX = rect.width / 2;
-          const centerY = rect.height / 2;
-          
-          const rotateX = (y - centerY) / 10;
-          const rotateY = (centerX - x) / 10;
-          
-          this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px) scale(1.02)`;
-        });
-        
-        card.addEventListener('mouseleave', function() {
-          this.style.transform = '';
-        });
-      });
-    }
-
-    const loadingMessages = [
-      { text: "Connecting to Database...", subtitle: "Establishing secure connection", icon: "🔌", step: 1, progress: 10 },
-      { text: "Fetching Member Profile...", subtitle: "Retrieving parliamentary data", icon: "📊", step: 1, progress: 20 },
-      { text: "Extracting Personal Information...", subtitle: "Processing member details", icon: "👤", step: 1, progress: 30 },
-      { text: "Analyzing Financial Data...", subtitle: "Scanning affidavit records", icon: "💰", step: 2, progress: 40 },
-      { text: "Finding Bank Accounts...", subtitle: "Extracting deposit information", icon: "🏦", step: 2, progress: 50 },
-      { text: "Parsing Asset Details...", subtitle: "Processing movable assets", icon: "💎", step: 3, progress: 60 },
-      { text: "Identifying Vehicles...", subtitle: "Extracting vehicle information", icon: "🚗", step: 3, progress: 70 },
-      { text: "Processing Properties...", subtitle: "Analyzing immovable assets", icon: "🏠", step: 4, progress: 80 },
-      { text: "Calculating Liabilities...", subtitle: "Processing loan details", icon: "💳", step: 4, progress: 90 },
-      { text: "Finalizing Dashboard...", subtitle: "Preparing visualization", icon: "✨", step: 5, progress: 95 },
-      { text: "Almost Ready...", subtitle: "Final touches", icon: "🎨", step: 5, progress: 100 }
-    ];
-
-    let currentMessageIndex = 0;
-    let messageInterval;
-
-    function updateLoadingMessage() {
-      if (currentMessageIndex >= loadingMessages.length) {
-        clearInterval(messageInterval);
-        return;
       }
 
-      const message = loadingMessages[currentMessageIndex];
-      const loadingText = document.getElementById('loading-text');
-      const loadingSubtitle = document.getElementById('loading-subtitle');
-      const loaderIcon = document.getElementById('loader-icon');
-      const progressBar = document.getElementById('progress-bar');
+      counter.textContent = text.replace(/[\d.]+/, '0');
+      counter.classList.add('counting');
 
-      loadingText.style.animation = 'none';
-      loadingSubtitle.style.animation = 'none';
-      
       setTimeout(() => {
-        loadingText.textContent = message.text;
-        loadingSubtitle.textContent = message.subtitle;
-        loaderIcon.textContent = message.icon;
-        progressBar.style.width = message.progress + '%';
-        
-        loadingText.style.animation = 'fadeIn 0.5s ease-in-out';
-        loadingSubtitle.style.animation = 'fadeIn 0.5s ease-in-out';
-
-        for (let i = 1; i <= 5; i++) {
-          const step = document.getElementById(`step-${i}`);
-          if (i < message.step) {
-            step.className = 'loading-step completed';
-          } else if (i === message.step) {
-            step.className = 'loading-step active';
-          } else {
-            step.className = 'loading-step';
-          }
-        }
-      }, 10);
-
-      currentMessageIndex++;
+        updateCounter();
+      }, 500);
     }
+  });
+}
 
-    function startLoadingAnimation() {
-      updateLoadingMessage();
-      messageInterval = setInterval(updateLoadingMessage, 800);
-    }
+// 3D tilt effect for cards
+function add3DTilt() {
+  const cards = document.querySelectorAll('.quick-stat-item, .card-item');
 
-    function scrollToTop() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  cards.forEach(card => {
+    card.addEventListener('mousemove', function (e) {
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-    function shareProfile() {
-      if (navigator.share) {
-        navigator.share({
-          title: `${currentMemberName} - ${currentMemberType} Profile`,
-          text: `Check out the profile of ${currentMemberName}`,
-          url: window.location.href
-        }).catch(err => console.log('Share failed:', err));
-      } else {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-          alert('✅ Profile link copied to clipboard!');
-        });
-      }
-    }
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
 
-    window.addEventListener('scroll', () => {
-      const backToTop = document.getElementById('backToTop');
-      if (window.scrollY > 300) {
-        backToTop.style.display = 'flex';
-      } else {
-        backToTop.style.display = 'none';
-      }
-      
-      revealOnScroll();
+      const rotateX = (y - centerY) / 10;
+      const rotateY = (centerX - x) / 10;
+
+      this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px) scale(1.02)`;
     });
 
-    window.scrollToTop = scrollToTop;
-    window.shareProfile = shareProfile;
+    card.addEventListener('mouseleave', function () {
+      this.style.transform = '';
+    });
+  });
+}
 
-    let currentMemberData = null;
-    let currentCandidateData = null;
-    let currentMemberName = null;
-    let currentMemberType = null;
+const loadingMessages = [
+  { text: "Connecting to Database...", subtitle: "Establishing secure connection", icon: "🔌", step: 1, progress: 10 },
+  { text: "Fetching Member Profile...", subtitle: "Retrieving parliamentary data", icon: "📊", step: 1, progress: 20 },
+  { text: "Extracting Personal Information...", subtitle: "Processing member details", icon: "👤", step: 1, progress: 30 },
+  { text: "Analyzing Financial Data...", subtitle: "Scanning affidavit records", icon: "💰", step: 2, progress: 40 },
+  { text: "Finding Bank Accounts...", subtitle: "Extracting deposit information", icon: "🏦", step: 2, progress: 50 },
+  { text: "Parsing Asset Details...", subtitle: "Processing movable assets", icon: "💎", step: 3, progress: 60 },
+  { text: "Identifying Vehicles...", subtitle: "Extracting vehicle information", icon: "🚗", step: 3, progress: 70 },
+  { text: "Processing Properties...", subtitle: "Analyzing immovable assets", icon: "🏠", step: 4, progress: 80 },
+  { text: "Calculating Liabilities...", subtitle: "Processing loan details", icon: "💳", step: 4, progress: 90 },
+  { text: "Finalizing Dashboard...", subtitle: "Preparing visualization", icon: "✨", step: 5, progress: 95 },
+  { text: "Almost Ready...", subtitle: "Final touches", icon: "🎨", step: 5, progress: 100 }
+];
 
-    function getQueryParams() {
-      const params = {};
-      window.location.search.substring(1).split('&').forEach(pair => {
-        const [key, value] = pair.split('=');
-        if (key) params[key] = decodeURIComponent(value || '');
-      });
-      return params;
-    }
+let currentMessageIndex = 0;
+let messageInterval;
 
-    const escapeHtml = (text) => {
-      if (!text) return '';
-      const div = document.createElement('div');
-      div.textContent = text.replace(/\+/g, ' ');
-      return div.innerHTML;
-    };
-    
-    const safeText = (value) => {
-      if (!value) return 'N/A';
-      return escapeHtml(String(value));
-    };
+function updateLoadingMessage() {
+  if (currentMessageIndex >= loadingMessages.length) {
+    clearInterval(messageInterval);
+    return;
+  }
 
-    function formatCurrency(value) {
-      if (!value || value === 'Nil' || value === 'N/A') return 'N/A';
-      
-      const match = String(value).match(/Rs\s*([\d,]+)/);
-      if (match) {
-        const num = parseInt(match[1].replace(/,/g, ''));
-        if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)} Cr`;
-        if (num >= 100000) return `₹${(num / 100000).toFixed(2)} L`;
-        if (num >= 1000) return `₹${(num / 1000).toFixed(2)} K`;
-        return `₹${num.toLocaleString('en-IN')}`;
+  const message = loadingMessages[currentMessageIndex];
+  const loadingText = document.getElementById('loading-text');
+  const loadingSubtitle = document.getElementById('loading-subtitle');
+  const loaderIcon = document.getElementById('loader-icon');
+  const progressBar = document.getElementById('progress-bar');
+
+  loadingText.style.animation = 'none';
+  loadingSubtitle.style.animation = 'none';
+
+  setTimeout(() => {
+    loadingText.textContent = message.text;
+    loadingSubtitle.textContent = message.subtitle;
+    loaderIcon.textContent = message.icon;
+    progressBar.style.width = message.progress + '%';
+
+    loadingText.style.animation = 'fadeIn 0.5s ease-in-out';
+    loadingSubtitle.style.animation = 'fadeIn 0.5s ease-in-out';
+
+    for (let i = 1; i <= 5; i++) {
+      const step = document.getElementById(`step-${i}`);
+      if (i < message.step) {
+        step.className = 'loading-step completed';
+      } else if (i === message.step) {
+        step.className = 'loading-step active';
+      } else {
+        step.className = 'loading-step';
       }
-      return value;
     }
+  }, 10);
 
-    function toggleSection(id) {
-      const content = document.getElementById(id);
-      const btn = event.target;
-      if (content) {
-        content.classList.toggle('active');
-        btn.textContent = content.classList.contains('active') ? 'Hide Details' : 'Show Details';
-      }
-    }
+  currentMessageIndex++;
+}
 
-    window.toggleSection = toggleSection;
+function startLoadingAnimation() {
+  updateLoadingMessage();
+  messageInterval = setInterval(updateLoadingMessage, 800);
+}
 
-    function cleanAttendance(value) {
-      if (!value || value === 'N/A' || value === 'NANA' || value === 'nananan' || value === 'NANAN' || value === 'NaN' || value === 'null' || value === 'undefined') return 'N/A';
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-      const cleaned = String(value).replace(/%/g, '').trim();
+function shareProfile() {
+  if (navigator.share) {
+    navigator.share({
+      title: `${currentMemberName} - ${currentMemberType} Profile`,
+      text: `Check out the profile of ${currentMemberName}`,
+      url: window.location.href
+    }).catch(err => console.log('Share failed:', err));
+  } else {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      alert('✅ Profile link copied to clipboard!');
+    });
+  }
+}
 
-      // Check for invalid values after cleaning
-      if (cleaned === 'NANA' || cleaned === 'nananan' || cleaned === 'NANAN' || cleaned === 'NaN' || cleaned === 'null' || cleaned === 'undefined' || cleaned === '') return 'N/A';
+window.addEventListener('scroll', () => {
+  const backToTop = document.getElementById('backToTop');
+  if (window.scrollY > 300) {
+    backToTop.style.display = 'flex';
+  } else {
+    backToTop.style.display = 'none';
+  }
 
-      // If it's a valid number, add % back
-      const num = parseFloat(cleaned);
-      if (!isNaN(num) && num >= 0 && num <= 100) {
-        return num + '%';
-      }
+  revealOnScroll();
+});
 
-      return 'N/A';
-    }
+window.scrollToTop = scrollToTop;
+window.shareProfile = shareProfile;
+
+let currentMemberData = null;
+let currentCandidateData = null;
+let currentMemberName = null;
+let currentMemberType = null;
+
+function getQueryParams() {
+  const params = {};
+  window.location.search.substring(1).split('&').forEach(pair => {
+    const [key, value] = pair.split('=');
+    if (key) params[key] = decodeURIComponent(value || '');
+  });
+  return params;
+}
+
+const escapeHtml = (text) => {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text.replace(/\+/g, ' ');
+  return div.innerHTML;
+};
+
+const safeText = (value) => {
+  if (!value) return 'N/A';
+  return escapeHtml(String(value));
+};
+
+function formatCurrency(value) {
+  if (!value || value === 'Nil' || value === 'N/A') return 'N/A';
+
+  const match = String(value).match(/Rs\s*([\d,]+)/);
+  if (match) {
+    const num = parseInt(match[1].replace(/,/g, ''));
+    if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)} Cr`;
+    if (num >= 100000) return `₹${(num / 100000).toFixed(2)} L`;
+    if (num >= 1000) return `₹${(num / 1000).toFixed(2)} K`;
+    return `₹${num.toLocaleString('en-IN')}`;
+  }
+  return value;
+}
+
+function toggleSection(id) {
+  const content = document.getElementById(id);
+  const btn = event.target;
+  if (content) {
+    content.classList.toggle('active');
+    btn.textContent = content.classList.contains('active') ? 'Hide Details' : 'Show Details';
+  }
+}
+
+window.toggleSection = toggleSection;
+
+function cleanAttendance(value) {
+  if (!value || value === 'N/A' || value === 'NANA' || value === 'nananan' || value === 'NANAN' || value === 'NaN' || value === 'null' || value === 'undefined') return 'N/A';
+
+  const cleaned = String(value).replace(/%/g, '').trim();
+
+  // Check for invalid values after cleaning
+  if (cleaned === 'NANA' || cleaned === 'nananan' || cleaned === 'NANAN' || cleaned === 'NaN' || cleaned === 'null' || cleaned === 'undefined' || cleaned === '') return 'N/A';
+
+  // If it's a valid number, add % back
+  const num = parseFloat(cleaned);
+  if (!isNaN(num) && num >= 0 && num <= 100) {
+    return num + '%';
+  }
+
+  return 'N/A';
+}
 function cleanEducation(educationText) {
   if (!educationText) return 'N/A';
-  
+
   // First, remove all the Google Charts and JavaScript code
   let cleaned = educationText
     // Remove everything from google.charts to the end of the function
@@ -326,7 +326,7 @@ function cleanEducation(educationText) {
     // Remove multiple spaces and trim
     .replace(/\s+/g, ' ')
     .trim();
-  
+
   // Now extract the actual education content
   // Look for education-related keywords
   const educationPatterns = [
@@ -347,130 +347,130 @@ function cleanEducation(educationText) {
     /\d{1,2}th\s+Pass[\s\S]*?Year-?\d{4}/gi,
     /\d{1,2}th\s+[Ss]tandard[\s\S]*?Year-?\d{4}/gi
   ];
-  
+
   const educationMatches = [];
-  
+
   for (const pattern of educationPatterns) {
     const matches = cleaned.match(pattern);
     if (matches) {
       matches.forEach(match => {
-      
+
         const cleanMatch = match
           .replace(/\s+/g, ' ')
           .replace(/Others\s*/gi, '')
           .trim();
-        
+
         if (cleanMatch.length > 10 && !educationMatches.some(em => em.includes(cleanMatch) || cleanMatch.includes(em))) {
           educationMatches.push(cleanMatch);
         }
       });
     }
   }
-  
+
   if (educationMatches.length > 0) {
-   
+
     return educationMatches.join(' & ');
   }
- 
+
   const fallbackPatterns = [
     'diploma', 'degree', 'engineering', 'medical', 'arts', 'science', 'commerce',
     'university', 'college', 'institute', 'school', 'pass', 'graduate', 'master',
     'bachelor', 'phd', 'doctorate', 'certificate'
   ];
-  
-  const hasEducationKeywords = fallbackPatterns.some(keyword => 
+
+  const hasEducationKeywords = fallbackPatterns.some(keyword =>
     cleaned.toLowerCase().includes(keyword)
   );
-  
+
   if (hasEducationKeywords && cleaned.length > 10 && cleaned.length < 500) {
-  
+
     return cleaned
-      .replace(/^\W+/, '') 
-      .replace(/\W+$/, '') 
-      .replace(/\s{2,}/g, ' ') 
+      .replace(/^\W+/, '')
+      .replace(/\W+$/, '')
+      .replace(/\s{2,}/g, ' ')
       .trim();
   }
-  
+
   return 'N/A';
 }
 function parseBankAccounts(text) {
-      if (!text || text === 'Nil') return [];
+  if (!text || text === 'Nil') return [];
 
-      const accounts = [];
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 10);
+  const accounts = [];
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 10);
 
-      for (const line of lines) {
-        const isFD = /^FD\s+[Ii]n/i.test(line);
-        
-        const bankMatch = line.match(/\b(State Bank of India|SBI|ICICI Bank|ICICI|HDFC Bank|HDFC|Axis Bank|Axis|Canara Bank|Canara|Punjab National Bank|PNB|Bank of Baroda|BOB|Union Bank|Oriental Bank of Commerce|OBC|IDBI Bank|Indian Bank|Yes Bank|Kotak Mahindra Bank|Federal Bank|IndusInd Bank)\b/i);
-        const bank = bankMatch ? bankMatch[1].trim() : '';
-        
-        const branchMatch = line.match(/Br\.?\s+([^,]+?)(?:,|\s+No)/i);
-        const branch = branchMatch ? branchMatch[1].trim() : 'N/A';
-        
-        const accMatch = line.match(/No\s+([\dxX]+)/);
-        const accountNo = accMatch ? accMatch[1] : '';
-        
-        const amountMatch = line.match(/Rs\s+([\d,]+)/);
-        const amount = amountMatch ? `Rs ${amountMatch[1]}` : 'N/A';
-        
-        if (!bank || !accountNo) continue;
-        
-        accounts.push({ bank, branch, accountNo, amount, type: isFD ? 'Fixed Deposit' : 'Savings/Current' });
+  for (const line of lines) {
+    const isFD = /^FD\s+[Ii]n/i.test(line);
+
+    const bankMatch = line.match(/\b(State Bank of India|SBI|ICICI Bank|ICICI|HDFC Bank|HDFC|Axis Bank|Axis|Canara Bank|Canara|Punjab National Bank|PNB|Bank of Baroda|BOB|Union Bank|Oriental Bank of Commerce|OBC|IDBI Bank|Indian Bank|Yes Bank|Kotak Mahindra Bank|Federal Bank|IndusInd Bank)\b/i);
+    const bank = bankMatch ? bankMatch[1].trim() : '';
+
+    const branchMatch = line.match(/Br\.?\s+([^,]+?)(?:,|\s+No)/i);
+    const branch = branchMatch ? branchMatch[1].trim() : 'N/A';
+
+    const accMatch = line.match(/No\s+([\dxX]+)/);
+    const accountNo = accMatch ? accMatch[1] : '';
+
+    const amountMatch = line.match(/Rs\s+([\d,]+)/);
+    const amount = amountMatch ? `Rs ${amountMatch[1]}` : 'N/A';
+
+    if (!bank || !accountNo) continue;
+
+    accounts.push({ bank, branch, accountNo, amount, type: isFD ? 'Fixed Deposit' : 'Savings/Current' });
+  }
+
+  console.log(`🏦 Parsed ${accounts.length} bank accounts`);
+  return accounts;
+}
+
+function parseVehicles(text) {
+  if (!text || text === 'Nil') return [];
+
+  const vehicles = [];
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 15);
+
+  const brands = ['Audi', 'BMW', 'Mercedes', 'Toyota', 'Honda', 'Hyundai', 'Mahindra', 'Maruti', 'Innova', 'Fortuner', 'City'];
+
+  for (const line of lines) {
+    let make = 'Vehicle';
+    for (const brand of brands) {
+      if (new RegExp(`\\b${brand}\\b`, 'i').test(line)) {
+        make = brand;
+        break;
       }
-
-      console.log(`🏦 Parsed ${accounts.length} bank accounts`);
-      return accounts;
     }
 
-    function parseVehicles(text) {
-      if (!text || text === 'Nil') return [];
+    const modelMatch = line.match(/Model[:\s]+([^,]+?)(?:,|Reg|\s+Rs)/i);
+    const model = modelMatch ? modelMatch[1].trim() : '';
 
-      const vehicles = [];
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 15);
+    const regMatch = line.match(/[Rr]eg(?:istration)?\s*No[:\s-]*([A-Z0-9-]+)/i);
+    const registration = regMatch ? regMatch[1].trim() : '';
 
-      const brands = ['Audi', 'BMW', 'Mercedes', 'Toyota', 'Honda', 'Hyundai', 'Mahindra', 'Maruti', 'Innova', 'Fortuner', 'City'];
+    const yearMatch = line.match(/(?:Date\s*Of\s*Purchased|DOP|Purchased)[:\s]*(\d{2,4}[-\/]\d{2}[-\/]\d{2,4}|\d{4})/i) || line.match(/\b(20\d{2}|19\d{2})\b/);
+    const year = yearMatch ? yearMatch[1] : '';
 
-      for (const line of lines) {
-        let make = 'Vehicle';
-        for (const brand of brands) {
-          if (new RegExp(`\\b${brand}\\b`, 'i').test(line)) {
-            make = brand;
-            break;
-          }
-        }
-        
-        const modelMatch = line.match(/Model[:\s]+([^,]+?)(?:,|Reg|\s+Rs)/i);
-        const model = modelMatch ? modelMatch[1].trim() : '';
-        
-        const regMatch = line.match(/[Rr]eg(?:istration)?\s*No[:\s-]*([A-Z0-9-]+)/i);
-        const registration = regMatch ? regMatch[1].trim() : '';
-        
-        const yearMatch = line.match(/(?:Date\s*Of\s*Purchased|DOP|Purchased)[:\s]*(\d{2,4}[-\/]\d{2}[-\/]\d{2,4}|\d{4})/i) || line.match(/\b(20\d{2}|19\d{2})\b/);
-        const year = yearMatch ? yearMatch[1] : '';
-        
-        const amountMatch = line.match(/Rs\s+([\d,]+)/);
-        const amount = amountMatch ? `Rs ${amountMatch[1]}` : 'N/A';
-        
-        vehicles.push({ make, model, registration, year, amount });
-      }
+    const amountMatch = line.match(/Rs\s+([\d,]+)/);
+    const amount = amountMatch ? `Rs ${amountMatch[1]}` : 'N/A';
 
-      console.log(`🚗 Parsed ${vehicles.length} vehicles`);
-      return vehicles;
-    }
+    vehicles.push({ make, model, registration, year, amount });
+  }
+
+  console.log(`🚗 Parsed ${vehicles.length} vehicles`);
+  return vehicles;
+}
 function parseProperty(text) {
   if (!text || text === 'Nil') return [];
-  
+
   const properties = [];
-  
+
   // Split by double newlines or numbered patterns like (1), (2)
   const blocks = text.split(/\n\n+|(?=\(\d+\)-)/g).filter(b => b.trim().length > 0);
-  
+
   for (const block of blocks) {
     let address = '';
     let value = 'N/A';
     let area = '';
-    
+
     // Extract value
     const valueMatch = block.match(/Value:\s*Rs\s*([\d,]+)/i);
     if (valueMatch) {
@@ -480,86 +480,86 @@ function parseProperty(text) {
     } else {
       address = block.trim();
     }
-    
+
     // Extract area/rakba
     const areaMatch = block.match(/(?:Area|Rakba)[:\s-]*([\d.]+\s*(?:hec|sq|acres|sq\.?\s*(?:ft|m|meter)?))/i);
     if (areaMatch) {
       area = areaMatch[1].trim();
     }
-    
+
     if (address && address.length > 5 && address !== 'Nil') {
       properties.push({ address, value, area });
     }
   }
-  
+
   console.log(`🏠 Parsed ${properties.length} properties from text`);
   return properties;
 }
-    function parseLoans(text) {
-      if (!text || text === 'Nil') return [];
-      
-      const loans = [];
-      const lines = text.split('\n').filter(l => l.trim().length > 10);
-      
-      for (const line of lines) {
-        const parts = line.split(':');
-        if (parts.length < 2) continue;
-        
-        const lender = parts[0].trim();
-        
-        let type = 'Loan';
-        if (/House Loan/i.test(line)) type = 'House Loan';
-        else if (/Unsecured Loan/i.test(line)) type = 'Unsecured Loan';
-        else if (/Personal Loan/i.test(line)) type = 'Personal Loan';
-        
-        const accMatch = line.match(/Ac\s+No[:\s-]*([\w-]+)/i);
-        const accountNo = accMatch ? accMatch[1] : '';
-        
-        const amountMatch = line.match(/Rs\s+([\d,]+)/);
-        const amount = amountMatch ? `Rs ${amountMatch[1]}` : 'N/A';
-        
-        loans.push({ lender, type, accountNo, amount });
-      }
-      
-      console.log(`💳 Parsed ${loans.length} loans`);
-      return loans;
-    }
+function parseLoans(text) {
+  if (!text || text === 'Nil') return [];
 
-    function parseSimpleList(text) {
-      if (!text || text === 'Nil') return [];
-      
-      const items = [];
-      const lines = text.split('\n').filter(l => l.trim().length > 5);
-      
-      for (const line of lines) {
-        const parts = line.split(':');
-        const description = parts[0] ? parts[0].trim() : line.trim();
-        
-        const amountMatch = line.match(/Rs\s+([\d,]+)/);
-        const amount = amountMatch ? `Rs ${amountMatch[1]}` : 'N/A';
-        
-        items.push({ description, amount });
-      }
-      
-      return items;
-    }
+  const loans = [];
+  const lines = text.split('\n').filter(l => l.trim().length > 10);
 
-    function createStatCard(title, mpValue, natAvg, stateAvg, icon, gradient) {
-      const parseValue = (val) => {
-        if (!val || val === 'N/A') return 0;
-        return parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0;
-      };
+  for (const line of lines) {
+    const parts = line.split(':');
+    if (parts.length < 2) continue;
 
-      const mpNum = parseValue(mpValue);
-      const natNum = parseValue(natAvg);
-      const stateNum = parseValue(stateAvg);
+    const lender = parts[0].trim();
 
-      const maxVal = Math.max(mpNum, natNum, stateNum) || 1;
-      const mpPct = (mpNum / maxVal * 100);
-      const natPct = (natNum / maxVal * 100);
-      const statePct = (stateNum / maxVal * 100);
+    let type = 'Loan';
+    if (/House Loan/i.test(line)) type = 'House Loan';
+    else if (/Unsecured Loan/i.test(line)) type = 'Unsecured Loan';
+    else if (/Personal Loan/i.test(line)) type = 'Personal Loan';
 
-      return `
+    const accMatch = line.match(/Ac\s+No[:\s-]*([\w-]+)/i);
+    const accountNo = accMatch ? accMatch[1] : '';
+
+    const amountMatch = line.match(/Rs\s+([\d,]+)/);
+    const amount = amountMatch ? `Rs ${amountMatch[1]}` : 'N/A';
+
+    loans.push({ lender, type, accountNo, amount });
+  }
+
+  console.log(`💳 Parsed ${loans.length} loans`);
+  return loans;
+}
+
+function parseSimpleList(text) {
+  if (!text || text === 'Nil') return [];
+
+  const items = [];
+  const lines = text.split('\n').filter(l => l.trim().length > 5);
+
+  for (const line of lines) {
+    const parts = line.split(':');
+    const description = parts[0] ? parts[0].trim() : line.trim();
+
+    const amountMatch = line.match(/Rs\s+([\d,]+)/);
+    const amount = amountMatch ? `Rs ${amountMatch[1]}` : 'N/A';
+
+    items.push({ description, amount });
+  }
+
+  return items;
+}
+
+function createStatCard(title, mpValue, natAvg, stateAvg, icon, gradient) {
+  const parseValue = (val) => {
+    if (!val || val === 'N/A') return 0;
+    return parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0;
+  };
+
+  const mpNum = parseValue(mpValue);
+  const natNum = parseValue(natAvg);
+  const stateNum = parseValue(stateAvg);
+
+  const maxVal = Math.max(mpNum, natNum, stateNum) || 1;
+  const mpPct = (mpNum / maxVal * 100);
+  const natPct = (natNum / maxVal * 100);
+  const statePct = (stateNum / maxVal * 100);
+
+  return `
         <div class="stat-card reveal">
           <div class="stat-header">
             <div class="stat-title">${escapeHtml(title)}</div>
@@ -595,9 +595,9 @@ function parseProperty(text) {
           </div>
         </div>
       `;
-    }
+}
 
-   // ============================================================================
+// ============================================================================
 // PROGRESSIVE LOADING STATE
 // ============================================================================
 let currentRequestId = null;
@@ -613,7 +613,7 @@ async function loadMemberData() {
   if (window.SERVER_DATA) {
     console.log('✅ Using server-injected data');
     const { memberName, memberType, prsData, candidateData } = window.SERVER_DATA;
-    
+
     currentMemberName = memberName;
     currentMemberType = memberType;
     currentCandidateData = candidateData;
@@ -623,18 +623,18 @@ async function loadMemberData() {
     } else {
       renderMLADashboardFromServerData(prsData, candidateData);
     }
-    
+
     return;
   }
 
   console.log('⚠️ No server data, fetching via API...');
   const params = getQueryParams();
   const { name, type, meow, bhaw, constituency, party } = params;
-  
+
   if (!name || !type) {
     throw new Error('Missing name or type parameter');
   }
-  
+
   currentMemberName = name;
   currentMemberType = type;
 
@@ -660,13 +660,13 @@ async function loadMemberData() {
     }
 
     console.log('📡 Making parallel API request to:', apiUrl);
-    
+
     const response = await fetch(apiUrl);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
 
     if (!data.found) {
@@ -674,13 +674,13 @@ async function loadMemberData() {
     }
 
     currentRequestId = data.requestId;
-    
+
     console.log(`✅ First data received from: ${data.firstSource}`);
     console.log(`📊 Both sources complete: ${data.bothComplete}`);
     console.log(`⏱️ Response time: ${data.timing?.total}ms`);
 
     currentCandidateData = data.candidateData || null;
-    console.log("Current dTA",currentCandidateData)
+    console.log("Current dTA", currentCandidateData)
 
     if (type === 'MP') {
       renderMPDashboardFromServerData(data, data.candidateData);
@@ -724,14 +724,14 @@ function startPolling(params) {
   if (pollingInterval) {
     clearInterval(pollingInterval);
   }
-  
+
   pollingAttempts = 0;
-  
+
   pollingInterval = setInterval(async () => {
     pollingAttempts++;
-    
+
     console.log(`🔄 Polling attempt ${pollingAttempts}/${MAX_POLL_ATTEMPTS}`);
-    
+
     if (pollingAttempts > MAX_POLL_ATTEMPTS) {
       stopPolling();
       console.log('⏹️ Polling stopped: max attempts reached');
@@ -741,27 +741,27 @@ function startPolling(params) {
 
     try {
       let pollUrl = `/api/prs/poll/${currentRequestId}`;
-      
+
       const response = await fetch(pollUrl);
       const result = await response.json();
-      
+
       if (result.ready && result.data) {
         console.log('✅ Secondary data received! Updating dashboard...');
         stopPolling();
-        
+
         if (result.data.candidateData) {
           currentCandidateData = result.data.candidateData;
         }
-        
+
         updateDashboardWithNewData(result.data);
-        
+
         showNotification('✨ Additional data loaded successfully!', 'success');
       }
-      
+
     } catch (err) {
       console.error('❌ Polling error:', err);
     }
-    
+
   }, POLL_INTERVAL);
 }
 
@@ -779,15 +779,15 @@ function stopPolling() {
 
 function updateDashboardWithNewData(newData) {
   console.log('🔄 Smart updating dashboard with secondary data...');
-  
+
   let hasUpdates = false;
 
   // Helper: Check if field needs update
   const needsUpdate = (currentValue) => {
-    return !currentValue || 
-           currentValue === 'N/A' || 
-           currentValue === 'Unknown' || 
-           currentValue.trim() === '';
+    return !currentValue ||
+      currentValue === 'N/A' ||
+      currentValue === 'Unknown' ||
+      currentValue.trim() === '';
   };
 
   // Update personal info fields
@@ -824,11 +824,11 @@ function updateDashboardWithNewData(newData) {
   if (newData.html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(newData.html, 'text/html');
-    
+
     const attendanceTable = doc.querySelector('#block-views-mps-attendance-block table');
     const debatesTable = doc.querySelector('#block-views-mps-debate-related-views-block table');
     const questionsTable = doc.querySelector('#block-views-mp-related-views-block-2222 table');
-    
+
     if (attendanceTable && !document.querySelector('#attendance-content table')) {
       const container = document.getElementById('attendance-content');
       if (container) {
@@ -837,7 +837,7 @@ function updateDashboardWithNewData(newData) {
         hasUpdates = true;
       }
     }
-    
+
     if (debatesTable && !document.querySelector('#debates-content table')) {
       const container = document.getElementById('debates-content');
       if (container) {
@@ -846,7 +846,7 @@ function updateDashboardWithNewData(newData) {
         hasUpdates = true;
       }
     }
-    
+
     if (questionsTable && !document.querySelector('#questions-content table')) {
       const container = document.getElementById('questions-content');
       if (container) {
@@ -859,7 +859,7 @@ function updateDashboardWithNewData(newData) {
 
   if (newData.candidateData && !document.querySelector('.quick-stats-banner')) {
     console.log('🔄 Re-rendering dashboard with complete data...');
-    
+
     const mergedData = {
       ...currentMemberData,
       ...newData,
@@ -868,13 +868,13 @@ function updateDashboardWithNewData(newData) {
         ...(newData.personal || {})
       }
     };
-    
+
     if (currentMemberType === 'MP') {
       renderMPDashboardFromServerData(mergedData, newData.candidateData);
     } else {
       renderMLADashboardFromServerData(mergedData, newData.candidateData);
     }
-    
+
     hasUpdates = true;
   }
 
@@ -889,7 +889,7 @@ function updateDashboardWithNewData(newData) {
 
 function updatePerformanceMetrics(performance) {
   console.log('📊 Updating performance metrics...', performance);
-  
+
   // Helper function to find stat card by title text
   const findStatCardByTitle = (titleText) => {
     const statCards = document.querySelectorAll('.stat-card');
@@ -919,7 +919,7 @@ function updatePerformanceMetrics(performance) {
       }
     }
   }
-  
+
   // Update Debates
   if (performance.debates) {
     const debatesCard = findStatCardByTitle('Debates');
@@ -932,7 +932,7 @@ function updatePerformanceMetrics(performance) {
       }
     }
   }
-  
+
   // Update Questions
   if (performance.questions) {
     const questionsCard = findStatCardByTitle('Questions');
@@ -963,11 +963,11 @@ function updatePerformanceMetrics(performance) {
   if (performance.natAttendance || performance.stateAttendance) {
     updateComparisonBars('Attendance', performance.attendance, performance.natAttendance, performance.stateAttendance);
   }
-  
+
   if (performance.natDebates || performance.stateDebates) {
     updateComparisonBars('Debates', performance.debates, performance.natDebates, performance.stateDebates);
   }
-  
+
   if (performance.natQuestions || performance.stateQuestions) {
     updateComparisonBars('Questions', performance.questions, performance.natQuestions, performance.stateQuestions);
   }
@@ -982,7 +982,7 @@ function updateComparisonBars(metricName, memberValue, nationalAvg, stateAvg) {
   if (!card) return;
 
   const comparisonBars = card.querySelectorAll('.comparison-bar');
-  
+
   const parseValue = (val) => {
     if (!val || val === 'N/A') return 0;
     return parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0;
@@ -998,7 +998,7 @@ function updateComparisonBars(metricName, memberValue, nationalAvg, stateAvg) {
     const label = bar.querySelector('.bar-label')?.textContent.toLowerCase();
     const barFill = bar.querySelector('.bar-fill');
     const barValue = bar.querySelector('.bar-value');
-    
+
     if (!barFill || !barValue) return;
 
     if (label?.includes('selected')) {
@@ -1036,7 +1036,7 @@ function animateFieldUpdate(element) {
   element.style.transition = 'all 0.5s ease';
   element.style.backgroundColor = '#fef3c7'; // Light yellow highlight
   element.style.transform = 'scale(1.05)';
-  
+
   setTimeout(() => {
     element.style.backgroundColor = '';
     element.style.transform = '';
@@ -1052,7 +1052,7 @@ function animateFieldUpdate(element) {
 function showPollingIndicator() {
   // Remove existing if any
   hidePollingIndicator();
-  
+
   const indicator = document.createElement('div');
   indicator.id = 'polling-indicator';
   indicator.style.cssText = `
@@ -1072,7 +1072,7 @@ function showPollingIndicator() {
     font-weight: 600;
     animation: slideInUp 0.3s ease;
   `;
-  
+
   indicator.innerHTML = `
     <div style="
       width: 20px;
@@ -1084,7 +1084,7 @@ function showPollingIndicator() {
     "></div>
     <span>Loading additional data...</span>
   `;
-  
+
   document.body.appendChild(indicator);
 }
 
@@ -1099,21 +1099,21 @@ function hidePollingIndicator() {
 function showNotification(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = 'custom-toast';
-  
+
   const icons = {
     success: '✅',
     warning: '⚠️',
     error: '❌',
     info: 'ℹ️'
   };
-  
+
   const colors = {
     success: 'linear-gradient(135deg, #10b981, #059669)',
     warning: 'linear-gradient(135deg, #f59e0b, #d97706)',
     error: 'linear-gradient(135deg, #ef4444, #dc2626)',
     info: 'linear-gradient(135deg, #3b82f6, #2563eb)'
   };
-  
+
   toast.style.cssText = `
     position: fixed;
     top: 30px;
@@ -1133,7 +1133,7 @@ function showNotification(message, type = 'info') {
     border-left: 5px solid;
     border-image: ${colors[type]} 1;
   `;
-  
+
   toast.innerHTML = `
     <div style="font-size: 1.8em; line-height: 1;">${icons[type]}</div>
     <div style="flex: 1;">
@@ -1162,14 +1162,14 @@ function showNotification(message, type = 'info') {
       ×
     </button>
   `;
-  
+
   document.body.appendChild(toast);
-  
+
   setTimeout(() => {
     toast.style.transform = 'translateX(0)';
     toast.style.opacity = '1';
   }, 10);
-  
+
   setTimeout(() => {
     toast.style.transform = 'translateX(400px)';
     toast.style.opacity = '0';
@@ -1223,12 +1223,12 @@ function renderMPDashboardFromServerData(prsData, candidateData) {
     data.attendanceTable = prsData.attendanceTable;
     console.log('✅ Attendance table loaded directly from prsData');
   }
-  
+
   if (prsData.debatesTable) {
     data.debatesTable = prsData.debatesTable;
     console.log('✅ Debates table loaded directly from prsData');
   }
-  
+
   if (prsData.questionsTable) {
     data.questionsTable = prsData.questionsTable;
     console.log('✅ Questions table loaded directly from prsData');
@@ -1256,7 +1256,7 @@ function renderMPDashboardFromServerData(prsData, candidateData) {
     console.log('⚠️ Some tables missing, attempting to parse from HTML...');
     const parser = new DOMParser();
     const doc = parser.parseFromString(prsData.html, 'text/html');
-    
+
     if (!data.attendanceTable) {
       const attendanceTableEl = doc.querySelector('#block-views-mps-attendance-block table');
       if (attendanceTableEl) {
@@ -1264,7 +1264,7 @@ function renderMPDashboardFromServerData(prsData, candidateData) {
         console.log('✅ Attendance table extracted from HTML');
       }
     }
-    
+
     if (!data.debatesTable) {
       const debatesTableEl = doc.querySelector('#block-views-mps-debate-related-views-block table');
       if (debatesTableEl) {
@@ -1272,7 +1272,7 @@ function renderMPDashboardFromServerData(prsData, candidateData) {
         console.log('✅ Debates table extracted from HTML');
       }
     }
-    
+
     if (!data.questionsTable) {
       const questionsTableEl = doc.querySelector('#block-views-mp-related-views-block-2222 table');
       if (questionsTableEl) {
@@ -1292,11 +1292,11 @@ function renderMPDashboardFromServerData(prsData, candidateData) {
   });
 
   currentMemberData = data;
-  renderDashboard(data, candidateData); 
+  renderDashboard(data, candidateData);
 }
 function renderMLADashboardFromServerData(prsData, candidateData) {
   console.log('🎨 Rendering MLA Dashboard');
-  
+
   const data = {
     name: currentMemberName,
     imageUrl: prsData.imageUrl,
@@ -1353,37 +1353,37 @@ function renderMLADashboardFromServerData(prsData, candidateData) {
   });
 
   currentMemberData = data;
-  renderDashboard(data, candidateData); 
+  renderDashboard(data, candidateData);
 }
-    // ============================================================================
+// ============================================================================
 // DATA MERGING HELPER - Fills missing fields from candidateData
 // ============================================================================
 function mergeCandidateDataIntoMain(data, candidateData) {
   if (!candidateData) return data;
-  
+
   const merged = { ...data };
-  
+
   const needsUpdate = (value) => {
     return !value || value === 'N/A' || value === 'Unknown' || String(value).trim() === '';
   };
-  
+
   const getCandidateValue = (field) => {
     return candidateData.candidate?.[field] || candidateData[field];
   };
-  
+
   const fieldsToMerge = ['age', 'gender', 'constituency', 'party', 'imageUrl', 'state'];
-  
+
   fieldsToMerge.forEach(field => {
     if (needsUpdate(merged[field])) {
       const candidateValue = getCandidateValue(field);
-      
+
       if (candidateValue && !needsUpdate(candidateValue)) {
         merged[field] = candidateValue;
         console.log(`✅ Filled ${field} from candidateData:`, candidateValue);
       }
     }
   });
-  
+
   if (needsUpdate(merged.education)) {
     const candidateEducation = getCandidateValue('education');
     if (candidateEducation && !needsUpdate(candidateEducation)) {
@@ -1391,14 +1391,14 @@ function mergeCandidateDataIntoMain(data, candidateData) {
       console.log(`✅ Filled education from candidateData:`, merged.education);
     }
   }
-  
+
   if (needsUpdate(merged.relation)) {
     const candidateRelation = getCandidateValue('relation');
     if (candidateRelation && !needsUpdate(candidateRelation)) {
       merged.relation = candidateRelation;
     }
   }
-  
+
   return merged;
 }
 
@@ -1407,69 +1407,69 @@ function mergeCandidateDataIntoMain(data, candidateData) {
 
 async function getValidImageUrl(data, candidateData) {
   const defaultKeywords = ['placeholder', 'default', 'avatar', 'no-image', 'notfound'];
-  
+
   const isPlaceholder = (url) => {
     if (!url) return true;
     const urlLower = url.toLowerCase();
-    return defaultKeywords.some(keyword => urlLower.includes(keyword)) || 
-           url.includes('via.placeholder.com');
+    return defaultKeywords.some(keyword => urlLower.includes(keyword)) ||
+      url.includes('via.placeholder.com');
   };
-  
+
   const testImageUrl = (url) => {
     return new Promise((resolve) => {
       if (!url || isPlaceholder(url)) {
         resolve(false);
         return;
       }
-      
+
       const img = new Image();
       img.onload = () => resolve(true);
       img.onerror = () => resolve(false);
       img.src = url;
-      
+
       setTimeout(() => resolve(false), 3000);
     });
   };
-  
+
   const imageUrls = [];
-  
+
   if (data.imageUrl) {
     imageUrls.push({ source: 'PRS India', url: data.imageUrl });
   }
-  
+
   if (candidateData?.candidate?.imageUrl) {
     imageUrls.push({ source: 'MyNeta', url: candidateData.candidate.imageUrl });
   }
   if (candidateData?.imageUrl) {
     imageUrls.push({ source: 'MyNeta', url: candidateData.imageUrl });
   }
-  
-  if (currentMemberName) {
-   const cleanName = currentMemberName
-  .toLowerCase()
-  .replace(/\+/g, ' ')       
-  .replace(/\s+/g, '-')    
-  .replace(/[^a-z0-9-]/g, '');
 
-    
+  if (currentMemberName) {
+    const cleanName = currentMemberName
+      .toLowerCase()
+      .replace(/\+/g, ' ')
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
+
     const alternativeUrls = [
       `https://myneta.info/images/${cleanName}.jpg`,
       `https://prsindia.org/mptrack/sites/default/files/member_images/${cleanName}.jpg`,
       `https://sansad.in/getFile/loksabhampimage?mpcodeval=${cleanName}`,
     ];
-    
+
     alternativeUrls.forEach(url => {
       imageUrls.push({ source: 'Alternative', url });
     });
   }
-  
+
   console.log(`🖼️ Testing ${imageUrls.length} image URLs...`);
-  
+
   for (const { source, url } of imageUrls) {
     console.log(`🔍 Testing image from ${source}: ${url}`);
-    
+
     const isValid = await testImageUrl(url);
-    
+
     if (isValid) {
       console.log(`✅ Valid image found from ${source}`);
       return { url, source };
@@ -1477,16 +1477,16 @@ async function getValidImageUrl(data, candidateData) {
       console.log(`❌ Invalid image from ${source}`);
     }
   }
-  
+
   console.log('⚠️ No valid images found, using placeholder');
-  return { 
-    url: 'https://via.placeholder.com/200/667eea/ffffff?text=' + 
-         encodeURIComponent(currentMemberName?.charAt(0) || '?'), 
-    source: 'Placeholder' 
+  return {
+    url: 'https://via.placeholder.com/200/667eea/ffffff?text=' +
+      encodeURIComponent(currentMemberName?.charAt(0) || '?'),
+    source: 'Placeholder'
   };
 }
 
-     function renderDashboard(data, candidateData = null) {
+function renderDashboard(data, candidateData = null) {
   console.log('🎨 Rendering COMPLETE dashboard with ALL data');
   console.log('data', data);
   console.log("candidate data", candidateData);
@@ -1498,27 +1498,27 @@ async function getValidImageUrl(data, candidateData) {
 
 
 
- if (candidateData && candidateData.candidate && candidateData.candidate.education) {
+  if (candidateData && candidateData.candidate && candidateData.candidate.education) {
     candidateData.candidate.education = cleanEducation(candidateData.candidate.education);
   }
 
- let imageUrl = data.imageUrl || 'https://via.placeholder.com/200';
+  let imageUrl = data.imageUrl || 'https://via.placeholder.com/200';
   let imageSource = 'PRS India';
-  
+
   getValidImageUrl(data, candidateData).then(result => {
     const imgElement = document.querySelector('.profile-image');
     if (imgElement && result.url !== imgElement.src) {
       console.log(`🔄 Updating image to source: ${result.source}`);
       imgElement.src = result.url;
-      
+
       const wrapper = document.querySelector('.profile-image-wrapper');
       if (wrapper && result.source !== 'Placeholder') {
         const existingBadge = wrapper.querySelector('.image-source-badge');
         if (existingBadge) existingBadge.remove();
-        
+
         const sourceBadge = document.createElement('div');
-            sourceBadge.className = 'image-source-badge';
-      sourceBadge.innerHTML = `✓ Official Profile`; 
+        sourceBadge.className = 'image-source-badge';
+        sourceBadge.innerHTML = `✓ Official Profile`;
         wrapper.appendChild(sourceBadge);
       }
     }
@@ -1546,18 +1546,18 @@ async function getValidImageUrl(data, candidateData) {
             if (!isNaN(num) && num > 100) totalAssets += num;
           }
         }
-        
+
         if (asset.description && asset.description.toLowerCase().includes('cash') && asset.self && asset.self !== 'Nil') {
           const match = asset.self.match(/Rs\s*([\d,]+)/);
           if (match) {
             totalCash = parseInt(match[1].replace(/,/g, ''));
           }
         }
-        
+
         if (asset.description && asset.description.toLowerCase().includes('deposits in banks') && asset.self && asset.self !== 'Nil') {
           totalBankAccounts = parseBankAccounts(asset.self).length;
         }
-        
+
         if (asset.description && asset.description.toLowerCase().includes('motor vehicles') && asset.self && asset.self !== 'Nil') {
           totalVehicles = parseVehicles(asset.self).length;
         }
@@ -1606,7 +1606,7 @@ async function getValidImageUrl(data, candidateData) {
   const hasDebates = data.debates && data.debates !== 'N/A' && data.debates !== '0';
   const hasQuestions = data.questions && data.questions !== 'N/A' && data.questions !== '0';
   const hasPMB = data.pmb && data.pmb !== 'N/A';
-  
+
   const hasPerformance = hasAttendance || hasDebates || hasQuestions || hasPMB;
 
   const statsIcons = {
@@ -1663,21 +1663,21 @@ async function getValidImageUrl(data, candidateData) {
     if (hasAttendance) {
       stats.push(createStatCard('Attendance', data.attendance, data.natAttendance || 'N/A', data.stateAttendance || 'N/A', '📊', 'linear-gradient(135deg, #667eea, #764ba2)'));
     }
-    
+
     if (hasDebates) {
       stats.push(createStatCard('Debates', data.debates, data.natDebates || 'N/A', data.stateDebates || 'N/A', '💬', 'linear-gradient(135deg, #8b5cf6, #7c3aed)'));
     }
-    
+
     if (hasQuestions) {
       stats.push(createStatCard('Questions', data.questions, data.natQuestions || 'N/A', data.stateQuestions || 'N/A', '❓', 'linear-gradient(135deg, #06b6d4, #0891b2)'));
     }
-    
+
     if (hasPMB) {
       stats.push(createStatCard('Private Member Bills', data.pmb, data.natPMB || 'N/A', 'N/A', '📄', 'linear-gradient(135deg, #10b981, #059669)'));
     }
 
     if (stats.length > 0) {
-  statsHTML = `
+      statsHTML = `
     <div class="section-header-main reveal">
       <h2><span class="icon">📊</span>Parliamentary Activity</h2>
     </div>
@@ -1685,7 +1685,7 @@ async function getValidImageUrl(data, candidateData) {
       <div class="stats-grid">${stats.join('')}</div>
     </div>
   `;
-}
+    }
   } else {
     statsHTML = `
       <div class="details-section reveal">
@@ -1717,7 +1717,7 @@ async function getValidImageUrl(data, candidateData) {
       </div>
     `;
   }
-  
+
   if (data.debatesTable) {
     detailsHTML += `
       <div class="details-section reveal">
@@ -1731,7 +1731,7 @@ async function getValidImageUrl(data, candidateData) {
       </div>
     `;
   }
-  
+
   if (data.questionsTable) {
     detailsHTML += `
       <div class="details-section reveal">
@@ -1796,19 +1796,19 @@ async function getValidImageUrl(data, candidateData) {
     }
 
     // ========================================
-// AI-POWERED SUMMARY - MAGNIFICENT SECTION
-// ========================================
-console.log("Ai Summary",candidateData.aiSummary)
-// ========================================
-// COMPREHENSIVE POLITICAL ANALYSIS
-// ========================================
-if (candidateData.aiSummary && candidateData.aiSummary.available === true) {
-  console.log('✅ Rendering Comprehensive Political Analysis');
-  
-  const analysisData = candidateData.aiSummary.summary;
-  const politician = candidateData.aiSummary.politician || currentMemberName;
-  
-  detailsHTML += `
+    // AI-POWERED SUMMARY - MAGNIFICENT SECTION
+    // ========================================
+    console.log("Ai Summary", candidateData.aiSummary)
+    // ========================================
+    // COMPREHENSIVE POLITICAL ANALYSIS
+    // ========================================
+    if (candidateData.aiSummary && candidateData.aiSummary.available === true) {
+      console.log('✅ Rendering Comprehensive Political Analysis');
+
+      const analysisData = candidateData.aiSummary.summary;
+      const politician = candidateData.aiSummary.politician || currentMemberName;
+
+      detailsHTML += `
     <div class="section-header-main reveal" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);">
       <h2>
         <span class="icon analysis-sparkle">📊</span>
@@ -1840,11 +1840,11 @@ if (candidateData.aiSummary && candidateData.aiSummary.available === true) {
               </span>
               <span class="analysis-meta-item">
                 <span class="analysis-meta-icon">📅</span>
-                ${new Date(candidateData.aiSummary.parsedAt || Date.now()).toLocaleDateString('en-IN', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
+                ${new Date(candidateData.aiSummary.parsedAt || Date.now()).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })}
               </span>
             </div>
           </div>
@@ -2040,17 +2040,17 @@ ${analysisData.economicRecord ? `
       </div>
     </div>
   `;
-}
+    }
 
     // ========================================
     // CRIMINAL CASES - DETAILED
     // ========================================
     if (candidateData.criminalCases) {
-      const pendingCases = candidateData.criminalCases.pendingCases?.filter(c => 
+      const pendingCases = candidateData.criminalCases.pendingCases?.filter(c =>
         c.serialNo && c.serialNo !== '---------No Cases--------' && c.serialNo !== 'Serial No.'
       ) || [];
 
-      const convictedCases = candidateData.criminalCases.convictedCases?.filter(c => 
+      const convictedCases = candidateData.criminalCases.convictedCases?.filter(c =>
         c.serialNo && c.serialNo !== '---------No Cases--------'
       ) || [];
 
@@ -2181,26 +2181,26 @@ ${analysisData.economicRecord ? `
             <h2><span class="icon">💵</span>Income Tax Returns</h2>
           </div>
         `;
-const parseIncomeSeries = (incomeText) => {
-  if (!incomeText) return [];
-  const parts = incomeText.split('**').filter(p => p.trim());
-  const years = [];
-  
-  for (let i = 0; i < parts.length; i += 2) {
-    if (i + 1 < parts.length) {
-      const year = parts[i].trim();
-      const amount = parts[i + 1].trim()
-        .replace(/<\/?b>/g, '')  
-        .replace(/<\/?[^>]+(>|$)/g, '');  
-      
-      if (year && amount && year !== 'None' && !amount.includes('Rs 0')) {
-        years.push({ year, amount });
-      }
-    }
-  }
-  
-  return years;
-};
+        const parseIncomeSeries = (incomeText) => {
+          if (!incomeText) return [];
+          const parts = incomeText.split('**').filter(p => p.trim());
+          const years = [];
+
+          for (let i = 0; i < parts.length; i += 2) {
+            if (i + 1 < parts.length) {
+              const year = parts[i].trim();
+              const amount = parts[i + 1].trim()
+                .replace(/<\/?b>/g, '')
+                .replace(/<\/?[^>]+(>|$)/g, '');
+
+              if (year && amount && year !== 'None' && !amount.includes('Rs 0')) {
+                years.push({ year, amount });
+              }
+            }
+          }
+
+          return years;
+        };
         const selfYears = parseIncomeSeries(selfIncome.income);
         const spouseYears = spouseIncome ? parseIncomeSeries(spouseIncome.income) : [];
         const hufYears = hufIncome ? parseIncomeSeries(hufIncome.income) : [];
@@ -2269,143 +2269,143 @@ const parseIncomeSeries = (incomeText) => {
     // ========================================
     // MOVABLE ASSETS - DETAILED BREAKDOWN
     // ========================================
-   // ========================================
-// MOVABLE ASSETS - COMPLETE DYNAMIC RENDERING
-// ========================================
-if (candidateData.movableAssets && Array.isArray(candidateData.movableAssets)) {
-  console.log('💎 Rendering ALL movable assets dynamically...');
-  
-  detailsHTML += `
+    // ========================================
+    // MOVABLE ASSETS - COMPLETE DYNAMIC RENDERING
+    // ========================================
+    if (candidateData.movableAssets && Array.isArray(candidateData.movableAssets)) {
+      console.log('💎 Rendering ALL movable assets dynamically...');
+
+      detailsHTML += `
     <div class="section-header-main reveal">
       <h2><span class="icon">💎</span>Movable Assets</h2>
     </div>
   `;
 
-  // ASSET CATEGORY CONFIGURATION - Maps srNo to metadata
-  const assetCategoryConfig = {
-    'i': { 
-      name: 'Cash in Hand', 
-      icon: '💵', 
-      color: '#10b981',
-      type: 'simple'
-    },
-    'ii': { 
-      name: 'Bank Deposits & Fixed Deposits', 
-      icon: '🏦', 
-      color: '#3b82f6',
-      type: 'bank_accounts'
-    },
-    'iii': { 
-      name: 'Bonds, Debentures & Shares', 
-      icon: '📊', 
-      color: '#8b5cf6',
-      type: 'investments'
-    },
-    'iv': { 
-      name: 'NSS, Postal Savings etc.', 
-      icon: '📮', 
-      color: '#f59e0b',
-      type: 'simple'
-    },
-    'v': { 
-      name: 'Personal Loans Given', 
-      icon: '📤', 
-      color: '#06b6d4',
-      type: 'line_items'
-    },
-    'vi': { 
-      name: 'Motor Vehicles', 
-      icon: '🚗', 
-      color: '#f59e0b',
-      type: 'vehicles'
-    },
-    'vii': { 
-      name: 'Jewellery & Valuables', 
-      icon: '💎', 
-      color: '#ec4899',
-      type: 'valuables'
-    },
-    'viii': { 
-      name: 'Other Assets', 
-      icon: '📦', 
-      color: '#64748b',
-      type: 'line_items'
-    }
-  };
+      // ASSET CATEGORY CONFIGURATION - Maps srNo to metadata
+      const assetCategoryConfig = {
+        'i': {
+          name: 'Cash in Hand',
+          icon: '💵',
+          color: '#10b981',
+          type: 'simple'
+        },
+        'ii': {
+          name: 'Bank Deposits & Fixed Deposits',
+          icon: '🏦',
+          color: '#3b82f6',
+          type: 'bank_accounts'
+        },
+        'iii': {
+          name: 'Bonds, Debentures & Shares',
+          icon: '📊',
+          color: '#8b5cf6',
+          type: 'investments'
+        },
+        'iv': {
+          name: 'NSS, Postal Savings etc.',
+          icon: '📮',
+          color: '#f59e0b',
+          type: 'simple'
+        },
+        'v': {
+          name: 'Personal Loans Given',
+          icon: '📤',
+          color: '#06b6d4',
+          type: 'line_items'
+        },
+        'vi': {
+          name: 'Motor Vehicles',
+          icon: '🚗',
+          color: '#f59e0b',
+          type: 'vehicles'
+        },
+        'vii': {
+          name: 'Jewellery & Valuables',
+          icon: '💎',
+          color: '#ec4899',
+          type: 'valuables'
+        },
+        'viii': {
+          name: 'Other Assets',
+          icon: '📦',
+          color: '#64748b',
+          type: 'line_items'
+        }
+      };
 
-  // SMART INVESTMENT PARSER - For Bonds, Shares, Mutual Funds
-  const parseInvestments = (text) => {
-    if (!text || text === 'Nil') return [];
-    
-    const items = [];
-    const lines = text.split('\n').filter(l => l.trim().length > 5);
-    
-    for (const line of lines) {
-      const parts = line.split(':');
-      if (parts.length >= 2) {
-        const name = parts[0].trim();
-        const value = parts.slice(1).join(':').trim();
-        
-        items.push({ 
-          name, 
-          value: value.replace(/Rs\s*/i, 'Rs '),
-          type: name.toLowerCase().includes('mutual') || name.toLowerCase().includes('fund') ? 'Mutual Fund' :
+      // SMART INVESTMENT PARSER - For Bonds, Shares, Mutual Funds
+      const parseInvestments = (text) => {
+        if (!text || text === 'Nil') return [];
+
+        const items = [];
+        const lines = text.split('\n').filter(l => l.trim().length > 5);
+
+        for (const line of lines) {
+          const parts = line.split(':');
+          if (parts.length >= 2) {
+            const name = parts[0].trim();
+            const value = parts.slice(1).join(':').trim();
+
+            items.push({
+              name,
+              value: value.replace(/Rs\s*/i, 'Rs '),
+              type: name.toLowerCase().includes('mutual') || name.toLowerCase().includes('fund') ? 'Mutual Fund' :
                 name.toLowerCase().includes('share') ? 'Shares' :
-                name.toLowerCase().includes('deposit') ? 'Deposit' : 'Investment'
-        });
-      }
-    }
-    
-    return items;
-  };
+                  name.toLowerCase().includes('deposit') ? 'Deposit' : 'Investment'
+            });
+          }
+        }
 
-  // SMART VALUABLES PARSER - For Jewellery with weights
-  const parseValuables = (text) => {
-    if (!text || text === 'Nil') return [];
-    
-    const items = [];
-    const lines = text.split('\n').filter(l => l.trim().length > 5);
-    
-    for (const line of lines) {
-      const parts = line.split(':');
-      const description = parts[0]?.trim() || line;
-      const value = parts[1]?.trim() || 'N/A';
-      
-      // Extract weight if present
-      const weightMatch = description.match(/(\d+\.?\d*)\s*(Gm|Kg|gm|kg)/i);
-      const weight = weightMatch ? `${weightMatch[1]} ${weightMatch[2]}` : null;
-      
-      items.push({ description, value, weight });
-    }
-    
-    return items;
-  };
+        return items;
+      };
 
-  // PROCESS EACH ASSET CATEGORY
-  candidateData.movableAssets.forEach((asset, index) => {
-    const srNo = asset.srNo?.toLowerCase().trim();
-    const config = assetCategoryConfig[srNo];
-    
-    // Skip if no self data or nil
-    if (!asset.self || asset.self === 'Nil' || asset.total === 'Rs 70') {
-      console.log(`⏭️ Skipping ${srNo}: No data`);
-      return;
-    }
+      // SMART VALUABLES PARSER - For Jewellery with weights
+      const parseValuables = (text) => {
+        if (!text || text === 'Nil') return [];
 
-    const categoryName = config?.name || asset.description || 'Other Asset';
-    const icon = config?.icon || '📋';
-    const color = config?.color || '#64748b';
-    const type = config?.type || 'line_items';
+        const items = [];
+        const lines = text.split('\n').filter(l => l.trim().length > 5);
 
-    console.log(`✅ Rendering: ${categoryName} (${type})`);
+        for (const line of lines) {
+          const parts = line.split(':');
+          const description = parts[0]?.trim() || line;
+          const value = parts[1]?.trim() || 'N/A';
 
-    // ========================================
-    // RENDER BASED ON TYPE
-    // ========================================
+          // Extract weight if present
+          const weightMatch = description.match(/(\d+\.?\d*)\s*(Gm|Kg|gm|kg)/i);
+          const weight = weightMatch ? `${weightMatch[1]} ${weightMatch[2]}` : null;
 
-    if (type === 'simple') {
-      // Simple amount display (Cash, NSS, etc.)
-      detailsHTML += `
+          items.push({ description, value, weight });
+        }
+
+        return items;
+      };
+
+      // PROCESS EACH ASSET CATEGORY
+      candidateData.movableAssets.forEach((asset, index) => {
+        const srNo = asset.srNo?.toLowerCase().trim();
+        const config = assetCategoryConfig[srNo];
+
+        // Skip if no self data or nil
+        if (!asset.self || asset.self === 'Nil' || asset.total === 'Rs 70') {
+          console.log(`⏭️ Skipping ${srNo}: No data`);
+          return;
+        }
+
+        const categoryName = config?.name || asset.description || 'Other Asset';
+        const icon = config?.icon || '📋';
+        const color = config?.color || '#64748b';
+        const type = config?.type || 'line_items';
+
+        console.log(`✅ Rendering: ${categoryName} (${type})`);
+
+        // ========================================
+        // RENDER BASED ON TYPE
+        // ========================================
+
+        if (type === 'simple') {
+          // Simple amount display (Cash, NSS, etc.)
+          detailsHTML += `
         <div class="details-section reveal">
           <div class="summary-card">
             <div class="summary-card-title">${icon} ${escapeHtml(categoryName)}</div>
@@ -2428,15 +2428,15 @@ if (candidateData.movableAssets && Array.isArray(candidateData.movableAssets)) {
           </div>
         </div>
       `;
-    }
+        }
 
-    else if (type === 'bank_accounts') {
-      // Bank accounts with detailed parsing
-      const accounts = parseBankAccounts(asset.self);
-      const spouseAccounts = asset.spouse && asset.spouse !== 'Nil' ? parseBankAccounts(asset.spouse) : [];
-      
-      if (accounts.length > 0 || spouseAccounts.length > 0) {
-        detailsHTML += `
+        else if (type === 'bank_accounts') {
+          // Bank accounts with detailed parsing
+          const accounts = parseBankAccounts(asset.self);
+          const spouseAccounts = asset.spouse && asset.spouse !== 'Nil' ? parseBankAccounts(asset.spouse) : [];
+
+          if (accounts.length > 0 || spouseAccounts.length > 0) {
+            detailsHTML += `
           <div class="details-section reveal">
             <div class="summary-card">
               <div class="summary-card-title">${icon} ${escapeHtml(categoryName)} (${accounts.length + spouseAccounts.length})</div>
@@ -2518,15 +2518,15 @@ if (candidateData.movableAssets && Array.isArray(candidateData.movableAssets)) {
             </div>
           </div>
         `;
-      }
-    }
+          }
+        }
 
-    else if (type === 'investments') {
-      // Bonds, Shares, Mutual Funds
-      const investments = parseInvestments(asset.self);
-      
-      if (investments.length > 0) {
-        detailsHTML += `
+        else if (type === 'investments') {
+          // Bonds, Shares, Mutual Funds
+          const investments = parseInvestments(asset.self);
+
+          if (investments.length > 0) {
+            detailsHTML += `
           <div class="details-section reveal">
             <div class="summary-card">
               <div class="summary-card-title">${icon} ${escapeHtml(categoryName)} (${investments.length})</div>
@@ -2557,15 +2557,15 @@ if (candidateData.movableAssets && Array.isArray(candidateData.movableAssets)) {
             </div>
           </div>
         `;
-      }
-    }
+          }
+        }
 
-    else if (type === 'vehicles') {
-      // Motor Vehicles
-      const vehicles = parseVehicles(asset.self);
-      
-      if (vehicles.length > 0) {
-        detailsHTML += `
+        else if (type === 'vehicles') {
+          // Motor Vehicles
+          const vehicles = parseVehicles(asset.self);
+
+          if (vehicles.length > 0) {
+            detailsHTML += `
           <div class="details-section reveal">
             <div class="summary-card">
               <div class="summary-card-title">${icon} ${escapeHtml(categoryName)} (${vehicles.length})</div>
@@ -2603,15 +2603,15 @@ if (candidateData.movableAssets && Array.isArray(candidateData.movableAssets)) {
             </div>
           </div>
         `;
-      }
-    }
+          }
+        }
 
-    else if (type === 'valuables') {
-      const items = parseValuables(asset.self);
-      const spouseItems = asset.spouse && asset.spouse !== 'Nil' ? parseValuables(asset.spouse) : [];
-      
-      if (items.length > 0 || spouseItems.length > 0) {
-        detailsHTML += `
+        else if (type === 'valuables') {
+          const items = parseValuables(asset.self);
+          const spouseItems = asset.spouse && asset.spouse !== 'Nil' ? parseValuables(asset.spouse) : [];
+
+          if (items.length > 0 || spouseItems.length > 0) {
+            detailsHTML += `
           <div class="details-section reveal">
             <div class="summary-card">
               <div class="summary-card-title">${icon} ${escapeHtml(categoryName)}</div>
@@ -2661,14 +2661,14 @@ if (candidateData.movableAssets && Array.isArray(candidateData.movableAssets)) {
             </div>
           </div>
         `;
-      }
-    }
+          }
+        }
 
-    else if (type === 'line_items') {
-      const items = parseSimpleList(asset.self);
-      
-      if (items.length > 0) {
-        detailsHTML += `
+        else if (type === 'line_items') {
+          const items = parseSimpleList(asset.self);
+
+          if (items.length > 0) {
+            detailsHTML += `
           <div class="details-section reveal">
             <div class="summary-card">
               <div class="summary-card-title">${icon} ${escapeHtml(categoryName)}</div>
@@ -2689,53 +2689,53 @@ if (candidateData.movableAssets && Array.isArray(candidateData.movableAssets)) {
             </div>
           </div>
         `;
-      }
-    }
-  });
+          }
+        }
+      });
 
-  console.log('✅ All movable assets rendered dynamically!');
-}
+      console.log('✅ All movable assets rendered dynamically!');
+    }
 
     // ========================================
     // IMMOVABLE ASSETS - DETAILED PROPERTIES
     // ========================================
-   // ========================================
-// IMMOVABLE ASSETS - COMPLETE WITH SPOUSE
-// ========================================
-if (candidateData.immovableAssets && Array.isArray(candidateData.immovableAssets)) {
-  const hasAnyImmovableAssets = candidateData.immovableAssets.some(a => 
-    (a.self && a.self !== 'Nil') || 
-    (a.spouse && a.spouse !== 'Nil') ||
-    (a.total && a.total !== 'Nil' && a.total !== 'Rs 70')
-  );
+    // ========================================
+    // IMMOVABLE ASSETS - COMPLETE WITH SPOUSE
+    // ========================================
+    if (candidateData.immovableAssets && Array.isArray(candidateData.immovableAssets)) {
+      const hasAnyImmovableAssets = candidateData.immovableAssets.some(a =>
+        (a.self && a.self !== 'Nil') ||
+        (a.spouse && a.spouse !== 'Nil') ||
+        (a.total && a.total !== 'Nil' && a.total !== 'Rs 70')
+      );
 
-  if (hasAnyImmovableAssets) {
-    detailsHTML += `
+      if (hasAnyImmovableAssets) {
+        detailsHTML += `
       <div class="section-header-main reveal">
         <h2><span class="icon">🏠</span>Immovable Assets</h2>
       </div>
     `;
 
-    candidateData.immovableAssets.forEach(asset => {
-      // Skip if no real data
-      if ((!asset.self || asset.self === 'Nil') && 
-          (!asset.spouse || asset.spouse === 'Nil') &&
-          (!asset.total || asset.total === 'Nil' || asset.total === 'Rs 70')) {
-        return;
-      }
+        candidateData.immovableAssets.forEach(asset => {
+          // Skip if no real data
+          if ((!asset.self || asset.self === 'Nil') &&
+            (!asset.spouse || asset.spouse === 'Nil') &&
+            (!asset.total || asset.total === 'Nil' || asset.total === 'Rs 70')) {
+            return;
+          }
 
-      const categoryName = asset.description || 'Property';
-      let icon = '🏘️';
-      
-      if (categoryName.toLowerCase().includes('agricultural')) icon = '🌾';
-      else if (categoryName.toLowerCase().includes('residential')) icon = '🏠';
-      else if (categoryName.toLowerCase().includes('commercial')) icon = '🏢';
-      else if (categoryName.toLowerCase().includes('non agricultural')) icon = '🏞️';
+          const categoryName = asset.description || 'Property';
+          let icon = '🏘️';
 
-      const selfProperties = parseProperty(asset.self);
-      const spouseProperties = parseProperty(asset.spouse);
+          if (categoryName.toLowerCase().includes('agricultural')) icon = '🌾';
+          else if (categoryName.toLowerCase().includes('residential')) icon = '🏠';
+          else if (categoryName.toLowerCase().includes('commercial')) icon = '🏢';
+          else if (categoryName.toLowerCase().includes('non agricultural')) icon = '🏞️';
 
-      detailsHTML += `
+          const selfProperties = parseProperty(asset.self);
+          const spouseProperties = parseProperty(asset.spouse);
+
+          detailsHTML += `
         <div class="details-section reveal">
           <div class="summary-card">
             <div class="summary-card-title">${icon} ${escapeHtml(categoryName)}</div>
@@ -2817,20 +2817,20 @@ if (candidateData.immovableAssets && Array.isArray(candidateData.immovableAssets
           </div>
         </div>
       `;
-    });
-  }
-}
+        });
+      }
+    }
 
     // ========================================
-// SOURCES OF INCOME
-// ========================================
-if (candidateData.sourcesOfIncome) {
-  const hasIncomeData = candidateData.sourcesOfIncome.self || 
-                        candidateData.sourcesOfIncome.spouse || 
-                        candidateData.sourcesOfIncome.dependent;
-  
-  if (hasIncomeData) {
-    detailsHTML += `
+    // SOURCES OF INCOME
+    // ========================================
+    if (candidateData.sourcesOfIncome) {
+      const hasIncomeData = candidateData.sourcesOfIncome.self ||
+        candidateData.sourcesOfIncome.spouse ||
+        candidateData.sourcesOfIncome.dependent;
+
+      if (hasIncomeData) {
+        detailsHTML += `
       <div class="details-section reveal">
         <div class="summary-card">
           <div class="summary-card-title">💰 Sources of Income</div>
@@ -2874,55 +2874,55 @@ if (candidateData.sourcesOfIncome) {
         </div>
       </div>
     `;
-  }
-}
-    
+      }
+    }
+
 
     // ========================================
     // LIABILITIES - DETAILED LOANS
     // ========================================
-   // ========================================
-// LIABILITIES - SHOW ALL CATEGORIES
-// ========================================
-if (candidateData.liabilities && Array.isArray(candidateData.liabilities)) {
-  const hasAnyLiabilities = candidateData.liabilities.some(l => 
-    (l.self && l.self !== 'Nil') || 
-    (l.spouse && l.spouse !== 'Nil') ||
-    (l.total && l.total !== 'Nil' && l.total !== 'Rs 70')
-  );
+    // ========================================
+    // LIABILITIES - SHOW ALL CATEGORIES
+    // ========================================
+    if (candidateData.liabilities && Array.isArray(candidateData.liabilities)) {
+      const hasAnyLiabilities = candidateData.liabilities.some(l =>
+        (l.self && l.self !== 'Nil') ||
+        (l.spouse && l.spouse !== 'Nil') ||
+        (l.total && l.total !== 'Nil' && l.total !== 'Rs 70')
+      );
 
-  if (hasAnyLiabilities) {
-    detailsHTML += `
+      if (hasAnyLiabilities) {
+        detailsHTML += `
       <div class="section-header-main reveal">
         <h2><span class="icon">💳</span>Liabilities</h2>
       </div>
     `;
 
-    candidateData.liabilities.forEach((liability, index) => {
-      // Skip if completely empty
-      if ((!liability.self || liability.self === 'Nil') && 
-          (!liability.spouse || liability.spouse === 'Nil') &&
-          (!liability.total || liability.total === 'Nil' || liability.total === 'Rs 70')) {
-        return;
-      }
+        candidateData.liabilities.forEach((liability, index) => {
+          // Skip if completely empty
+          if ((!liability.self || liability.self === 'Nil') &&
+            (!liability.spouse || liability.spouse === 'Nil') &&
+            (!liability.total || liability.total === 'Nil' || liability.total === 'Rs 70')) {
+            return;
+          }
 
-      const categoryName = liability.description || 'Liability';
-      const icon = categoryName.toLowerCase().includes('loan') ? '🏦' : 
-                   categoryName.toLowerCase().includes('dues') ? '🏛️' : 
-                   categoryName.toLowerCase().includes('dispute') ? '⚖️' : '💳';
+          const categoryName = liability.description || 'Liability';
+          const icon = categoryName.toLowerCase().includes('loan') ? '🏦' :
+            categoryName.toLowerCase().includes('dues') ? '🏛️' :
+              categoryName.toLowerCase().includes('dispute') ? '⚖️' : '💳';
 
-      const parsedLoans = liability.self && liability.self !== 'Nil' ? parseLoans(liability.self) : [];
-      const spouseLoans = liability.spouse && liability.spouse !== 'Nil' ? parseLoans(liability.spouse) : [];
+          const parsedLoans = liability.self && liability.self !== 'Nil' ? parseLoans(liability.self) : [];
+          const spouseLoans = liability.spouse && liability.spouse !== 'Nil' ? parseLoans(liability.spouse) : [];
 
-      detailsHTML += `
+          detailsHTML += `
         <div class="details-section reveal">
           <div class="summary-card">
             <div class="summary-card-title">${icon} ${escapeHtml(categoryName)}</div>
       `;
 
-      // If has structured loan data
-      if (parsedLoans.length > 0 || spouseLoans.length > 0) {
-        detailsHTML += `
+          // If has structured loan data
+          if (parsedLoans.length > 0 || spouseLoans.length > 0) {
+            detailsHTML += `
           ${parsedLoans.length > 0 ? `
             <div style="margin-bottom: ${spouseLoans.length > 0 ? '20px' : '0'};">
               <div style="font-weight: 700; color: #991b1b; margin-bottom: 12px; padding: 8px; background: #fef2f2; border-radius: 6px;">
@@ -2987,9 +2987,9 @@ if (candidateData.liabilities && Array.isArray(candidateData.liabilities)) {
             </div>
           ` : ''}
         `;
-      } else {
-        // Simple display for Nil/descriptive liabilities
-        detailsHTML += `
+          } else {
+            // Simple display for Nil/descriptive liabilities
+            detailsHTML += `
           <div class="card-item" style="text-align: center; padding: 30px; background: linear-gradient(135deg, #f0fdf4, #dcfce7);">
             <div style="font-size: 3em; margin-bottom: 10px;">✅</div>
             <div style="font-size: 1.2em; font-weight: 700; color: #166534; margin-bottom: 8px;">
@@ -3000,11 +3000,11 @@ if (candidateData.liabilities && Array.isArray(candidateData.liabilities)) {
             </div>
           </div>
         `;
-      }
+          }
 
-      // Total section
-      if (liability.total && liability.total !== 'Nil' && liability.total !== 'Rs 70') {
-        detailsHTML += `
+          // Total section
+          if (liability.total && liability.total !== 'Nil' && liability.total !== 'Rs 70') {
+            detailsHTML += `
           <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #fef2f2, #fee2e2); border-radius: 10px; text-align: center; border: 2px solid #ef4444;">
             <div style="font-size: 0.9em; color: #991b1b; font-weight: 700; margin-bottom: 5px; text-transform: uppercase;">
               Total Liability
@@ -3014,17 +3014,17 @@ if (candidateData.liabilities && Array.isArray(candidateData.liabilities)) {
             </div>
           </div>
         `;
-      }
+          }
 
-      detailsHTML += `
+          detailsHTML += `
           </div>
         </div>
       `;
-    });
+        });
 
-    // No liabilities message if all are Nil
-  } else {
-    detailsHTML += `
+        // No liabilities message if all are Nil
+      } else {
+        detailsHTML += `
       <div class="section-header-main reveal">
         <h2><span class="icon">💳</span>Liabilities</h2>
       </div>
@@ -3042,16 +3042,16 @@ if (candidateData.liabilities && Array.isArray(candidateData.liabilities)) {
         </div>
       </div>
     `;
-  }
-}
-// ========================================
-// PROFESSIONS
-// ========================================
-if (candidateData.professions) {
-  const hasProfessionData = candidateData.professions.self || candidateData.professions.spouse;
-  
-  if (hasProfessionData) {
-    detailsHTML += `
+      }
+    }
+    // ========================================
+    // PROFESSIONS
+    // ========================================
+    if (candidateData.professions) {
+      const hasProfessionData = candidateData.professions.self || candidateData.professions.spouse;
+
+      if (hasProfessionData) {
+        detailsHTML += `
       <div class="details-section reveal">
         <div class="summary-card">
           <div class="summary-card-title">💼 Professions</div>
@@ -3083,14 +3083,14 @@ if (candidateData.professions) {
         </div>
       </div>
     `;
-  }
-}
+      }
+    }
 
-// ========================================
-// OTHER ELECTIONS - HISTORICAL DATA
-// ========================================
-if (candidateData.otherElections && Array.isArray(candidateData.otherElections) && candidateData.otherElections.length > 0) {
-  detailsHTML += `
+    // ========================================
+    // OTHER ELECTIONS - HISTORICAL DATA
+    // ========================================
+    if (candidateData.otherElections && Array.isArray(candidateData.otherElections) && candidateData.otherElections.length > 0) {
+      detailsHTML += `
     <div class="section-header-main reveal">
       <h2><span class="icon">🗳️</span>Electoral History</h2>
     </div>
@@ -3110,20 +3110,20 @@ if (candidateData.otherElections && Array.isArray(candidateData.otherElections) 
             </thead>
             <tbody>
               ${candidateData.otherElections.map((election, idx) => {
-                const assetMatch = election.declaredAssets?.match(/Rs\s*([\d,]+)/);
-                const assetAmount = assetMatch ? parseInt(assetMatch[1].replace(/,/g, '')) : 0;
-                const prevAssetMatch = idx < candidateData.otherElections.length - 1 ? 
-                  candidateData.otherElections[idx + 1].declaredAssets?.match(/Rs\s*([\d,]+)/) : null;
-                const prevAmount = prevAssetMatch ? parseInt(prevAssetMatch[1].replace(/,/g, '')) : 0;
-                
-                const trend = idx < candidateData.otherElections.length - 1 ? 
-                  (assetAmount > prevAmount ? '📈 Increased' : 
-                   assetAmount < prevAmount ? '📉 Decreased' : '➡️ Same') : 
-                  '—';
-                
-                const casesColor = election.declaredCases > 0 ? '#dc2626' : '#10b981';
-                
-                return `
+        const assetMatch = election.declaredAssets?.match(/Rs\s*([\d,]+)/);
+        const assetAmount = assetMatch ? parseInt(assetMatch[1].replace(/,/g, '')) : 0;
+        const prevAssetMatch = idx < candidateData.otherElections.length - 1 ?
+          candidateData.otherElections[idx + 1].declaredAssets?.match(/Rs\s*([\d,]+)/) : null;
+        const prevAmount = prevAssetMatch ? parseInt(prevAssetMatch[1].replace(/,/g, '')) : 0;
+
+        const trend = idx < candidateData.otherElections.length - 1 ?
+          (assetAmount > prevAmount ? '📈 Increased' :
+            assetAmount < prevAmount ? '📉 Decreased' : '➡️ Same') :
+          '—';
+
+        const casesColor = election.declaredCases > 0 ? '#dc2626' : '#10b981';
+
+        return `
                   <tr>
                     <td><strong>${idx + 1}</strong></td>
                     <td>
@@ -3142,14 +3142,14 @@ if (candidateData.otherElections && Array.isArray(candidateData.otherElections) 
                     <td>${trend}</td>
                   </tr>
                 `;
-              }).join('')}
+      }).join('')}
             </tbody>
           </table>
         </div>
       </div>
     </div>
   `;
-}
+    }
     // ========================================
     // ASSET SUMMARY
     // ========================================
@@ -3203,7 +3203,7 @@ if (candidateData.otherElections && Array.isArray(candidateData.otherElections) 
 
   if (data.age !== 'N/A') {
     const ageDisplay = typeof data.age === 'number' ? `${data.age} years` : String(data.age).includes('year') ? data.age : `${data.age} years`;
-    
+
     infoItems.push(`
       <div class="info-item">
         <div class="info-label">🎂 Age</div>
@@ -3212,15 +3212,15 @@ if (candidateData.otherElections && Array.isArray(candidateData.otherElections) 
     `);
   }
 
- if (data.education !== 'N/A') {
-  infoItems.push(`
+  if (data.education !== 'N/A') {
+    infoItems.push(`
     <div class="info-item" style="grid-column: 1 ;">
       <div class="info-label">🎓 Education</div>
       <div class="info-value" data-field="education" style="line-height: 1.6;">${escapeHtml(data.education)}</div>
     </div>
   `);
 
-}
+  }
 
   if (data.gender !== 'N/A') {
     infoItems.push(`
@@ -3299,22 +3299,46 @@ if (candidateData.otherElections && Array.isArray(candidateData.otherElections) 
     revealOnScroll();
   }, 100);
 }
-    async function loadMemberDataWithLoader() {
-      const loader = document.getElementById("loading-screen");
-      loader.style.display = "flex";
-      
-      startLoadingAnimation();
-      
-      try {
-        await loadMemberData();
-      } catch (error) {
-        console.error('Fatal error:', error);
-      } finally {
-        setTimeout(() => {
-          loader.style.display = "none";
-          clearInterval(messageInterval);
-        }, 500);
-      }
+async function loadMemberDataWithLoader() {
+  const loader = document.getElementById("loading-screen");
+  loader.style.display = "flex";
+
+  startLoadingAnimation();
+
+  try {
+    await loadMemberData();
+  } catch (error) {
+    console.error('Fatal error:', error);
+  } finally {
+    setTimeout(() => {
+      loader.style.display = "none";
+      clearInterval(messageInterval);
+    }, 500);
+  }
+}
+
+window.addEventListener("DOMContentLoaded", loadMemberDataWithLoader);
+
+// ========================================
+// DISCLAIMER MODAL LOGIC
+// ========================================
+window.addEventListener('DOMContentLoaded', () => {
+  const disclaimerModal = document.getElementById('disclaimer-modal');
+  const acceptBtn = document.getElementById('accept-disclaimer');
+
+  if (disclaimerModal && acceptBtn) {
+    // Check session storage to see if already accepted
+    if (!sessionStorage.getItem('disclaimerAccepted')) {
+      // Using a slight delay to ensure it pops over any initial loading screens or transitions
+      setTimeout(() => {
+        disclaimerModal.classList.add('active');
+      }, 800);
     }
 
-    window.addEventListener("DOMContentLoaded", loadMemberDataWithLoader);
+    acceptBtn.addEventListener('click', () => {
+      disclaimerModal.classList.remove('active');
+      // Set flag in session storage
+      sessionStorage.setItem('disclaimerAccepted', 'true');
+    });
+  }
+});

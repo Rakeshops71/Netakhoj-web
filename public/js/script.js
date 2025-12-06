@@ -1,317 +1,317 @@
-  function createParticles() {
-            const particlesContainer = document.getElementById('particles');
-            const particleCount = 40;
+function createParticles() {
+    const particlesContainer = document.getElementById('particles');
+    const particleCount = 40;
 
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.width = (Math.random() * 5 + 2) + 'px';
-                particle.style.height = particle.style.width;
-                particle.style.animationDelay = Math.random() * 25 + 's';
-                particle.style.animationDuration = (Math.random() * 15 + 20) + 's';
-                particlesContainer.appendChild(particle);
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.width = (Math.random() * 5 + 2) + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.animationDelay = Math.random() * 25 + 's';
+        particle.style.animationDuration = (Math.random() * 15 + 20) + 's';
+        particlesContainer.appendChild(particle);
+    }
+}
+createParticles();
+
+let currentProgress = 0;
+const progressBar = document.getElementById('progressBar');
+
+function updateProgress(target, checkpoint) {
+    const interval = setInterval(() => {
+        if (currentProgress < target) {
+            currentProgress += 2;
+            progressBar.style.width = currentProgress + '%';
+        } else {
+            clearInterval(interval);
+            if (checkpoint) {
+                document.getElementById(checkpoint).classList.add('active');
             }
         }
-        createParticles();
+    }, 30);
+}
 
-        let currentProgress = 0;
-        const progressBar = document.getElementById('progressBar');
+const map = L.map('map', {
+    zoomControl: false
+}).setView([22.9734, 78.6569], 5);
 
-        function updateProgress(target, checkpoint) {
-            const interval = setInterval(() => {
-                if (currentProgress < target) {
-                    currentProgress += 2;
-                    progressBar.style.width = currentProgress + '%';
-                } else {
-                    clearInterval(interval);
-                    if (checkpoint) {
-                        document.getElementById(checkpoint).classList.add('active');
-                    }
-                }
-            }, 30);
-        }
+L.control.zoom({ position: 'topright' }).addTo(map);
 
-        const map = L.map('map', {
-            zoomControl: false
-        }).setView([22.9734, 78.6569], 5);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap, &copy; CARTO',
+    maxZoom: 19
+}).addTo(map);
 
-        L.control.zoom({ position: 'topright' }).addTo(map);
+let constituencyData = {};
+let rajyaSabhaData = {};
+let geojsonLayer;
+let selectedLayer = null;
+let allFeatures = [];
+let stateData = {};
+let highlightedLayers = [];
+let currentMapType = 'assembly';
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap, &copy; CARTO',
-            maxZoom: 19
-        }).addTo(map);
+const stats = {
+    lokSabha: {},
+    rajyaSabha: {},
+    mla: {},
+    totalLokSabha: 0,
+    totalRajyaSabha: 0,
+    totalMLAs: 0
+};
 
-        let constituencyData = {};
-        let rajyaSabhaData = {};
-        let geojsonLayer;
-        let selectedLayer = null;
-        let allFeatures = [];
-        let stateData = {};
-        let highlightedLayers = [];
-        let currentMapType = 'assembly';
+const assemblyBtn = document.getElementById('assemblyBtn');
+const parliamentaryBtn = document.getElementById('parliamentaryBtn');
 
-        const stats = {
-            lokSabha: {},
-            rajyaSabha: {},
-            mla: {},
-            totalLokSabha: 0,
-            totalRajyaSabha: 0,
-            totalMLAs: 0
-        };
+assemblyBtn.addEventListener('click', () => switchMap('assembly'));
+parliamentaryBtn.addEventListener('click', () => switchMap('parliamentary'));
 
-        const assemblyBtn = document.getElementById('assemblyBtn');
-        const parliamentaryBtn = document.getElementById('parliamentaryBtn');
+function switchMap(type) {
+    if (currentMapType === type) return;
 
-        assemblyBtn.addEventListener('click', () => switchMap('assembly'));
-        parliamentaryBtn.addEventListener('click', () => switchMap('parliamentary'));
+    currentMapType = type;
 
-        function switchMap(type) {
-            if (currentMapType === type) return;
+    if (type === 'assembly') {
+        assemblyBtn.classList.add('active');
+        parliamentaryBtn.classList.remove('active');
+    } else {
+        assemblyBtn.classList.remove('active');
+        parliamentaryBtn.classList.add('active');
+    }
 
-            currentMapType = type;
+    if (selectedLayer) {
+        selectedLayer.setStyle(defaultStyle());
+        selectedLayer = null;
+    }
+    clearHighlightedLayers();
+    document.getElementById('detailPanel').classList.remove('active');
+    document.getElementById('searchBox').value = '';
+    document.getElementById('searchSuggestions').classList.remove('active');
 
-            if (type === 'assembly') {
-                assemblyBtn.classList.add('active');
-                parliamentaryBtn.classList.remove('active');
-            } else {
-                assemblyBtn.classList.remove('active');
-                parliamentaryBtn.classList.add('active');
-            }
+    if (geojsonLayer) {
+        map.removeLayer(geojsonLayer);
+    }
 
-            if (selectedLayer) {
-                selectedLayer.setStyle(defaultStyle());
-                selectedLayer = null;
-            }
-            clearHighlightedLayers();
-            document.getElementById('detailPanel').classList.remove('active');
-            document.getElementById('searchBox').value = '';
-            document.getElementById('searchSuggestions').classList.remove('active');
+    loadGeoJSON(type);
+}
 
-            if (geojsonLayer) {
-                map.removeLayer(geojsonLayer);
-            }
+function cleanName(name) {
+    if (!name) return "";
+    return name.trim().toUpperCase().replace(/[^\w\s]/g, '');
+}
 
-            loadGeoJSON(type);
-        }
+function getConstituencyName(properties) {
+    return properties.pc_name || properties.PC_NAME ||
+        properties.ac_name || properties.AC_NAME || '';
+}
 
-        function cleanName(name) {
-            if (!name) return "";
-            return name.trim().toUpperCase().replace(/[^\w\s]/g, '');
-        }
+function getStateName(properties) {
+    return properties.st_name || properties.ST_NAME || 'India';
+}
 
-        function getConstituencyName(properties) {
-            return properties.pc_name || properties.PC_NAME ||
-                properties.ac_name || properties.AC_NAME || '';
-        }
+function isCurrentTerm(startDate, endDate) {
+    const today = new Date();
+    const start = new Date(startDate);
+    const end = endDate.toLowerCase().includes('office') ? today : new Date(endDate);
+    return start <= today && today <= end;
+}
 
-        function getStateName(properties) {
-            return properties.st_name || properties.ST_NAME || 'India';
-        }
+// ==================== MAP HELPER FUNCTIONS ====================
 
-        function isCurrentTerm(startDate, endDate) {
-            const today = new Date();
-            const start = new Date(startDate);
-            const end = endDate.toLowerCase().includes('office') ? today : new Date(endDate);
-            return start <= today && today <= end;
-        }
+function defaultStyle(feature) {
+    return {
+        color: '#3b82f6',
+        weight: 2,
+        fillOpacity: 0.2,
+        fillColor: '#3b82f6'
+    };
+}
 
-        // ==================== MAP HELPER FUNCTIONS ====================
+function highlightStyle(feature) {
+    return {
+        color: '#667eea',
+        weight: 3,
+        fillOpacity: 0.5,
+        fillColor: '#667eea'
+    };
+}
 
-        function defaultStyle(feature) {
-            return {
-                color: '#3b82f6',
-                weight: 2,
-                fillOpacity: 0.2,
-                fillColor: '#3b82f6'
-            };
-        }
+function onEachFeature(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: clickFeature
+    });
+}
 
-        function highlightStyle(feature) {
-            return {
-                color: '#667eea',
-                weight: 3,
+function highlightFeature(e) {
+    const layer = e.target;
+    if (layer !== selectedLayer && !highlightedLayers.includes(layer)) {
+        layer.setStyle({
+            weight: 3,
+            fillOpacity: 0.4,
+            color: '#667eea'
+        });
+    }
+}
+
+function resetHighlight(e) {
+    const layer = e.target;
+    if (layer !== selectedLayer && !highlightedLayers.includes(layer)) {
+        layer.setStyle(defaultStyle());
+    }
+}
+
+function clickFeature(e) {
+    const layer = e.target;
+    const feature = layer.feature;
+
+    if (selectedLayer && selectedLayer !== layer) {
+        selectedLayer.setStyle(defaultStyle());
+    }
+
+    layer.setStyle(highlightStyle());
+    selectedLayer = layer;
+
+    const bounds = layer.getBounds();
+    const center = bounds.getCenter();
+
+    map.flyTo(center, Math.max(map.getZoom(), 8), {
+        duration: 1.5,
+        easeLinearity: 0.25
+    });
+
+    setTimeout(() => {
+        showConstituencyDetails(feature);
+    }, 1600);
+}
+
+// ==================== HIGHLIGHT MANAGEMENT ====================
+
+function highlightConstituencyOnMap(feature) {
+    if (!geojsonLayer) return;
+
+    geojsonLayer.eachLayer(function (layer) {
+        if (layer.feature === feature) {
+            layer.setStyle({
+                color: '#f59e0b',
+                weight: 4,
                 fillOpacity: 0.5,
-                fillColor: '#667eea'
-            };
-        }
-
-        function onEachFeature(feature, layer) {
-            layer.on({
-                mouseover: highlightFeature,
-                mouseout: resetHighlight,
-                click: clickFeature
+                fillColor: '#f59e0b',
+                dashArray: ''
             });
-        }
+            highlightedLayers.push(layer);
 
-        function highlightFeature(e) {
-            const layer = e.target;
-            if (layer !== selectedLayer && !highlightedLayers.includes(layer)) {
-                layer.setStyle({
-                    weight: 3,
-                    fillOpacity: 0.4,
-                    color: '#667eea'
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                layer.bringToFront();
+            }
+        }
+    });
+}
+
+function clearHighlightedLayers() {
+    highlightedLayers.forEach(layer => {
+        if (layer !== selectedLayer) {
+            layer.setStyle(defaultStyle());
+        }
+    });
+    highlightedLayers = [];
+}
+
+// ==================== DATA LOADING ====================
+
+updateProgress(25, 'checkpoint1');
+
+Promise.all([
+    fetch('/api/all-data').then(res => res.json()),
+    fetch('/api/rajya-sabha').then(res => res.json()).catch(() => ({}))
+])
+    .then(([allData, rajyaSabha]) => {
+        updateProgress(50, 'checkpoint2');
+        console.log('Loaded all_data.json:', allData);
+        console.log('Loaded rajya_sabha.json:', rajyaSabha);
+
+        constituencyData = {};
+        rajyaSabhaData = rajyaSabha;
+
+        for (let key in allData) {
+            const cleanKey = cleanName(key);
+            constituencyData[cleanKey] = allData[key];
+
+            if (allData[key].MP && isCurrentTerm(allData[key].MP.term_start_date, allData[key].MP.term_end_date)) {
+                stats.totalLokSabha++;
+                const party = allData[key].MP.party;
+                stats.lokSabha[party] = (stats.lokSabha[party] || 0) + 1;
+            }
+
+            if (allData[key].Rajya_Sabha) {
+                allData[key].Rajya_Sabha.forEach(rs => {
+                    if (isCurrentTerm(rs.term_start_date, rs.term_end_date)) {
+                        stats.totalRajyaSabha++;
+                        const party = rs.party;
+                        stats.rajyaSabha[party] = (stats.rajyaSabha[party] || 0) + 1;
+                    }
+                });
+            }
+
+            if (allData[key].MLAs) {
+                allData[key].MLAs.forEach(mla => {
+                    if (isCurrentTerm(mla.term_start_date, mla.term_end_date)) {
+                        stats.totalMLAs++;
+                        const party = mla.party;
+                        stats.mla[party] = (stats.mla[party] || 0) + 1;
+                    }
                 });
             }
         }
 
-        function resetHighlight(e) {
-            const layer = e.target;
-            if (layer !== selectedLayer && !highlightedLayers.includes(layer)) {
-                layer.setStyle(defaultStyle());
-            }
-        }
-
-        function clickFeature(e) {
-            const layer = e.target;
-            const feature = layer.feature;
-
-            if (selectedLayer && selectedLayer !== layer) {
-                selectedLayer.setStyle(defaultStyle());
-            }
-
-            layer.setStyle(highlightStyle());
-            selectedLayer = layer;
-
-            const bounds = layer.getBounds();
-            const center = bounds.getCenter();
-
-            map.flyTo(center, Math.max(map.getZoom(), 8), {
-                duration: 1.5,
-                easeLinearity: 0.25
-            });
-
-            setTimeout(() => {
-                showConstituencyDetails(feature);
-            }, 1600);
-        }
-
-        // ==================== HIGHLIGHT MANAGEMENT ====================
-
-        function highlightConstituencyOnMap(feature) {
-            if (!geojsonLayer) return;
-
-            geojsonLayer.eachLayer(function (layer) {
-                if (layer.feature === feature) {
-                    layer.setStyle({
-                        color: '#f59e0b',
-                        weight: 4,
-                        fillOpacity: 0.5,
-                        fillColor: '#f59e0b',
-                        dashArray: ''
-                    });
-                    highlightedLayers.push(layer);
-
-                    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-                        layer.bringToFront();
-                    }
+        for (let state in rajyaSabhaData) {
+            rajyaSabhaData[state].forEach(member => {
+                const termEnd = member.term_end_date;
+                if (termEnd === "In Office" || isCurrentTerm(member.term_start_date, termEnd)) {
+                    stats.totalRajyaSabha++;
+                    const party = member.party || "Unknown";
+                    stats.rajyaSabha[party] = (stats.rajyaSabha[party] || 0) + 1;
                 }
             });
         }
 
-        function clearHighlightedLayers() {
-            highlightedLayers.forEach(layer => {
-                if (layer !== selectedLayer) {
-                    layer.setStyle(defaultStyle());
-                }
-            });
-            highlightedLayers = [];
-        }
+        updateProgress(75, 'checkpoint3');
+        updateDashboard();
+        loadGeoJSON('assembly');
+    })
+    .catch(error => {
+        console.error('Error loading data:', error);
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        alert('Error loading data. Please check console for details.');
+    });
 
-        // ==================== DATA LOADING ====================
+function updateDashboard() {
+    document.getElementById('totalLokSabhaMPs').textContent = stats.totalLokSabha;
+    document.getElementById('totalRajyaSabhaMPs').textContent = stats.totalRajyaSabha;
+    document.getElementById('totalMLAs').textContent = stats.totalMLAs;
 
-        updateProgress(25, 'checkpoint1');
+    updatePartyList('lokSabhaParties', stats.lokSabha);
+    updatePartyList('rajyaSabhaParties', stats.rajyaSabha);
+    updatePartyList('mlaParties', stats.mla);
+}
 
-        Promise.all([
-            fetch('/api/all-data').then(res => res.json()),
-            fetch('/api/rajya-sabha').then(res => res.json()).catch(() => ({}))
-        ])
-            .then(([allData, rajyaSabha]) => {
-                updateProgress(50, 'checkpoint2');
-                console.log('Loaded all_data.json:', allData);
-                console.log('Loaded rajya_sabha.json:', rajyaSabha);
+function updatePartyList(elementId, partyData) {
+    const container = document.getElementById(elementId);
+    const sortedParties = Object.entries(partyData)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
 
-                constituencyData = {};
-                rajyaSabhaData = rajyaSabha;
+    if (sortedParties.length === 0) {
+        container.innerHTML = '<p class="no-data">No data available</p>';
+        return;
+    }
 
-                for (let key in allData) {
-                    const cleanKey = cleanName(key);
-                    constituencyData[cleanKey] = allData[key];
-
-                    if (allData[key].MP && isCurrentTerm(allData[key].MP.term_start_date, allData[key].MP.term_end_date)) {
-                        stats.totalLokSabha++;
-                        const party = allData[key].MP.party;
-                        stats.lokSabha[party] = (stats.lokSabha[party] || 0) + 1;
-                    }
-
-                    if (allData[key].Rajya_Sabha) {
-                        allData[key].Rajya_Sabha.forEach(rs => {
-                            if (isCurrentTerm(rs.term_start_date, rs.term_end_date)) {
-                                stats.totalRajyaSabha++;
-                                const party = rs.party;
-                                stats.rajyaSabha[party] = (stats.rajyaSabha[party] || 0) + 1;
-                            }
-                        });
-                    }
-
-                    if (allData[key].MLAs) {
-                        allData[key].MLAs.forEach(mla => {
-                            if (isCurrentTerm(mla.term_start_date, mla.term_end_date)) {
-                                stats.totalMLAs++;
-                                const party = mla.party;
-                                stats.mla[party] = (stats.mla[party] || 0) + 1;
-                            }
-                        });
-                    }
-                }
-
-                for (let state in rajyaSabhaData) {
-                    rajyaSabhaData[state].forEach(member => {
-                        const termEnd = member.term_end_date;
-                        if (termEnd === "In Office" || isCurrentTerm(member.term_start_date, termEnd)) {
-                            stats.totalRajyaSabha++;
-                            const party = member.party || "Unknown";
-                            stats.rajyaSabha[party] = (stats.rajyaSabha[party] || 0) + 1;
-                        }
-                    });
-                }
-
-                updateProgress(75, 'checkpoint3');
-                updateDashboard();
-                loadGeoJSON('assembly');
-            })
-            .catch(error => {
-                console.error('Error loading data:', error);
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                alert('Error loading data. Please check console for details.');
-            });
-
-        function updateDashboard() {
-            document.getElementById('totalLokSabhaMPs').textContent = stats.totalLokSabha;
-            document.getElementById('totalRajyaSabhaMPs').textContent = stats.totalRajyaSabha;
-            document.getElementById('totalMLAs').textContent = stats.totalMLAs;
-
-            updatePartyList('lokSabhaParties', stats.lokSabha);
-            updatePartyList('rajyaSabhaParties', stats.rajyaSabha);
-            updatePartyList('mlaParties', stats.mla);
-        }
-
-        function updatePartyList(elementId, partyData) {
-            const container = document.getElementById(elementId);
-            const sortedParties = Object.entries(partyData)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10);
-
-            if (sortedParties.length === 0) {
-                container.innerHTML = '<p class="no-data">No data available</p>';
-                return;
-            }
-
-            let html = '';
-            sortedParties.forEach(([party, count]) => {
-                html += `
+    let html = '';
+    sortedParties.forEach(([party, count]) => {
+        html += `
                 <div class="party-item">
                     <div class="party-info">
                         <div class="party-color"></div>
@@ -323,41 +323,41 @@
                     <div class="party-count">${count}</div>
                 </div>
             `;
-            });
-            container.innerHTML = html;
-        }
+    });
+    container.innerHTML = html;
+}
 
-        function loadGeoJSON(type) {
-            updateProgress(85, null);
+function loadGeoJSON(type) {
+    updateProgress(85, null);
 
-            fetch(`/api/constituencies?type=${type}`)
-                .then(res => {
-                    if (!res.ok) throw new Error('Failed to load GeoJSON: ' + res.status);
-                    return res.json();
-                })
-                .then(geojson => {
-                    console.log('Loaded GeoJSON:', type);
-                    allFeatures = geojson.features;
+    fetch(`/api/constituencies?type=${type}`)
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to load GeoJSON: ' + res.status);
+            return res.json();
+        })
+        .then(geojson => {
+            console.log('Loaded GeoJSON:', type);
+            allFeatures = geojson.features;
 
-                    geojsonLayer = L.geoJSON(geojson, {
-                        style: defaultStyle,
-                        onEachFeature: onEachFeature
-                    }).addTo(map);
+            geojsonLayer = L.geoJSON(geojson, {
+                style: defaultStyle,
+                onEachFeature: onEachFeature
+            }).addTo(map);
 
-                    updateProgress(100, 'checkpoint4');
-                    setTimeout(() => {
-                        document.getElementById('loadingOverlay').classList.add('hidden');
-                    }, 500);
-                })
-                .catch(err => {
-                    console.error('Error loading GeoJSON:', err);
-                    document.getElementById('loadingOverlay').classList.add('hidden');
-                    alert('Error loading map data. Please check console for details.');
-                });
-        }
+            updateProgress(100, 'checkpoint4');
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }, 500);
+        })
+        .catch(err => {
+            console.error('Error loading GeoJSON:', err);
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            alert('Error loading map data. Please check console for details.');
+        });
+}
 
-       
-      // ==================== CONSTITUENCY DETAILS WITH API INTEGRATION ====================
+
+// ==================== CONSTITUENCY DETAILS WITH API INTEGRATION ====================
 
 async function showConstituencyDetails(feature) {
     const constituencyName = getConstituencyName(feature.properties);
@@ -427,7 +427,7 @@ async function showConstituencyDetails(feature) {
     html += '</div>';
 
     // ========== NATIONAL DATABASE SECTION (PLACEHOLDER) ==========
-  html += `
+    html += `
     <div class="detail-section">
         <div class="detail-section-title">
             <i class="fas fa-database"></i>
@@ -475,7 +475,7 @@ const loadingMessages = [
     { text: "Retrieving Pan-India Electoral Records", icon: "fa-globe-asia" },
     { text: "Analyzing Constituency Data", icon: "fa-chart-line" },
     { text: "Cross-referencing Electoral Intelligence", icon: "fa-brain" },
-     { text: "Validating Candidate Information", icon: "fa-check-double" },
+    { text: "Validating Candidate Information", icon: "fa-check-double" },
     { text: "Scanning Election History", icon: "fa-history" },
     { text: "Processing Electoral Data", icon: "fa-cog" },
     { text: "Querying Central Database", icon: "fa-server" }
@@ -484,18 +484,18 @@ const loadingMessages = [
 let loadingInterval = null;
 function startRotatingLoadingText(containerId) {
     let container = document.getElementById(containerId);
-    
+
     if (!container) {
         container = document.querySelector(`#${containerId}, .api-loading, .search-loading`);
     }
-    
+
     if (!container) return;
 
     let currentIndex = 0;
 
     const textElement = container.querySelector('.rotating-loading-text');
     const iconElement = container.querySelector('.rotating-loading-icon i');
-    
+
     if (!textElement || !iconElement) return;
 
     updateLoadingMessage(container, loadingMessages[0]);
@@ -512,17 +512,17 @@ function startRotatingLoadingText(containerId) {
 function updateLoadingMessage(container, message) {
     const textElement = container.querySelector('.rotating-loading-text');
     const iconElement = container.querySelector('.rotating-loading-icon i');
-    
+
     if (textElement && iconElement) {
         textElement.classList.add('fade-out');
-        
+
         setTimeout(() => {
             textElement.textContent = message.text + '...';
             iconElement.className = `fas ${message.icon}`;
-            
+
             textElement.classList.remove('fade-out');
             textElement.classList.add('fade-in');
-            
+
             setTimeout(() => {
                 textElement.classList.remove('fade-in');
             }, 300);
@@ -540,16 +540,16 @@ function stopRotatingLoadingText() {
 
 async function fetchNationalDatabaseForConstituency(constituencyName) {
     const container = document.getElementById('nationalDbResults');
-    
+
     if (!container) return;
 
     startRotatingLoadingText('nationalDbResults');
 
     try {
         const response = await fetch(`/api/search-proxy?q=${encodeURIComponent(constituencyName)}`);
-        
+
         stopRotatingLoadingText();
-        
+
         if (!response.ok) {
             throw new Error('API request failed');
         }
@@ -571,8 +571,8 @@ async function fetchNationalDatabaseForConstituency(constituencyName) {
             return;
         }
 
-        const relevantResults = data.suggestions.filter(item => 
-            item.constituency && 
+        const relevantResults = data.suggestions.filter(item =>
+            item.constituency &&
             cleanName(item.constituency) === cleanName(constituencyName)
         );
 
@@ -600,9 +600,9 @@ async function fetchNationalDatabaseForConstituency(constituencyName) {
 
     } catch (error) {
         console.error('❌ Error fetching national database:', error);
-        
+
         stopRotatingLoadingText();
-        
+
         container.innerHTML = `
             <div class="api-error">
                 <div class="error-icon">
@@ -619,7 +619,7 @@ async function fetchNationalDatabaseForConstituency(constituencyName) {
 function generateRepresentativeCard(member, type, constituency) {
     const memberName = member.name.replace(/'/g, "\\'");
     const party = member.party || 'N/A';
-    
+
     return `
         <div class="representative-card clickable-card"
              data-member-name="${memberName}"
@@ -672,18 +672,18 @@ function generateRepresentativeCard(member, type, constituency) {
 
 function generateNationalDbCard(result) {
     const typeInfo = detectMemberType(result.type);
-    const criminalBadge = result.criminal ? 
+    const criminalBadge = result.criminal ?
         '<span class="criminal-badge-inline"><i class="fas fa-exclamation-triangle"></i> Criminal Record</span>' : '';
-    
+
     let meow = '';
     let bhaw = '';
-    
+
     if (result.link) {
         try {
             const url = new URL(result.link);
             const params = new URLSearchParams(url.search);
             meow = params.get('candidate_id') || '';
-            
+
             const pathParts = url.pathname.split('/');
             const stateIndex = pathParts.findIndex(part => part && part !== '');
             if (stateIndex !== -1) {
@@ -771,24 +771,24 @@ function handleNationalDbClick(cardElement) {
         console.error('❌ Missing name or type in national DB card');
     }
 }
-        // ==================== NAVIGATION ====================
+// ==================== NAVIGATION ====================
 
-        function handleCardClick(cardElement) {
-            const name = cardElement.getAttribute('data-member-name');
-            const type = cardElement.getAttribute('data-member-type');
-            const constituency = cardElement.getAttribute('data-constituency') || '';
-            const party = cardElement.getAttribute('data-party') || '';
+function handleCardClick(cardElement) {
+    const name = cardElement.getAttribute('data-member-name');
+    const type = cardElement.getAttribute('data-member-type');
+    const constituency = cardElement.getAttribute('data-constituency') || '';
+    const party = cardElement.getAttribute('data-party') || '';
 
-            console.log('🎯 Card clicked:', { name, type, constituency, party });
+    console.log('🎯 Card clicked:', { name, type, constituency, party });
 
-            if (name && type) {
-                navigateToMember(name, type, constituency, party);
-            } else {
-                console.error('❌ Missing name or type in card data');
-            }
-        }
+    if (name && type) {
+        navigateToMember(name, type, constituency, party);
+    } else {
+        console.error('❌ Missing name or type in card data');
+    }
+}
 
-       function navigateToMember(name, type, constituency = '', party = '', meow = '', bhaw = '') {
+function navigateToMember(name, type, constituency = '', party = '', meow = '', bhaw = '') {
     console.log('🚀 Navigating to:', name, type, constituency, party, meow, bhaw);
 
     const params = new URLSearchParams();
@@ -806,55 +806,55 @@ function handleNationalDbClick(cardElement) {
 }
 
 
-        function testNavigation(name, type) {
-            console.log('🔍 Test Navigation Called:', name, type);
-            const url = `/member?name=${encodeURIComponent(name)}&type=${type}`;
-            console.log('📍 Navigating to:', url);
-            window.location.href = url;
-        }
+function testNavigation(name, type) {
+    console.log('🔍 Test Navigation Called:', name, type);
+    const url = `/member?name=${encodeURIComponent(name)}&type=${type}`;
+    console.log('📍 Navigating to:', url);
+    window.location.href = url;
+}
 
-        function testMemberRoute() {
-            fetch('/member?name=Test&type=MP')
-                .then(response => {
-                    console.log('✅ Member route status:', response.status);
-                    if (response.ok) {
-                        console.log('✅ Member route is accessible');
-                    } else {
-                        console.error('❌ Member route returned error:', response.status);
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Cannot reach member route:', error);
-                });
-        }
+function testMemberRoute() {
+    fetch('/member?name=Test&type=MP')
+        .then(response => {
+            console.log('✅ Member route status:', response.status);
+            if (response.ok) {
+                console.log('✅ Member route is accessible');
+            } else {
+                console.error('❌ Member route returned error:', response.status);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Cannot reach member route:', error);
+        });
+}
 
-        setTimeout(testMemberRoute, 2000);
+setTimeout(testMemberRoute, 2000);
 
-        // ==================== STATE MODAL ====================
+// ==================== STATE MODAL ====================
 
-        function showStateModal(stateName) {
-            const modal = document.getElementById('stateModal');
-            const modalBody = document.getElementById('modalBody');
+function showStateModal(stateName) {
+    const modal = document.getElementById('stateModal');
+    const modalBody = document.getElementById('modalBody');
 
-            document.getElementById('modalTitle').textContent = stateName;
+    document.getElementById('modalTitle').textContent = stateName;
 
-            let rajyaSabhaMembers = rajyaSabhaData[stateName] || [];
-            rajyaSabhaMembers = rajyaSabhaMembers.filter(rs =>
-                isCurrentTerm(rs.term_start_date, rs.term_end_date)
-            );
-            rajyaSabhaMembers = rajyaSabhaMembers.filter((member, index, self) =>
-                index === self.findIndex(m => m.name === member.name && m.party === member.party)
-            );
+    let rajyaSabhaMembers = rajyaSabhaData[stateName] || [];
+    rajyaSabhaMembers = rajyaSabhaMembers.filter(rs =>
+        isCurrentTerm(rs.term_start_date, rs.term_end_date)
+    );
+    rajyaSabhaMembers = rajyaSabhaMembers.filter((member, index, self) =>
+        index === self.findIndex(m => m.name === member.name && m.party === member.party)
+    );
 
-            console.log('Rajya Sabha members for', stateName, ':', rajyaSabhaMembers);
+    console.log('Rajya Sabha members for', stateName, ':', rajyaSabhaMembers);
 
-            let html = '';
-            const partyCount = {};
-            rajyaSabhaMembers.forEach(member => {
-                partyCount[member.party] = (partyCount[member.party] || 0) + 1;
-            });
+    let html = '';
+    const partyCount = {};
+    rajyaSabhaMembers.forEach(member => {
+        partyCount[member.party] = (partyCount[member.party] || 0) + 1;
+    });
 
-            html += `
+    html += `
             <div class="modal-stats">
                 <div class="modal-stat-card">
                     <div class="modal-stat-icon">
@@ -880,12 +880,12 @@ function handleNationalDbClick(cardElement) {
             </div>
         `;
 
-            html += '<div class="detail-section"><div class="detail-section-title"><i class="fas fa-university"></i> Rajya Sabha Members</div>';
+    html += '<div class="detail-section"><div class="detail-section-title"><i class="fas fa-university"></i> Rajya Sabha Members</div>';
 
-            if (rajyaSabhaMembers.length > 0) {
-                rajyaSabhaMembers.forEach(member => {
-                    const memberName = member.name.replace(/'/g, "\\'");
-                    html += `
+    if (rajyaSabhaMembers.length > 0) {
+        rajyaSabhaMembers.forEach(member => {
+            const memberName = member.name.replace(/'/g, "\\'");
+            html += `
                     <div class="representative-card clickable-card" 
                          data-member-name="${memberName}" 
                          data-member-type="MP"
@@ -929,32 +929,32 @@ function handleNationalDbClick(cardElement) {
                         </div>
                     </div>
                 `;
-                });
-            } else {
-                html += '<p class="no-data">No Rajya Sabha members found for this state</p>';
-            }
+        });
+    } else {
+        html += '<p class="no-data">No Rajya Sabha members found for this state</p>';
+    }
 
-            html += '</div>';
-            modalBody.innerHTML = html;
-            modal.classList.add('active');
-        }
+    html += '</div>';
+    modalBody.innerHTML = html;
+    modal.classList.add('active');
+}
 
-        function closeStateModal(event) {
-            if (!event || event.target.id === 'stateModal') {
-                document.getElementById('stateModal').classList.remove('active');
-            }
-        }
+function closeStateModal(event) {
+    if (!event || event.target.id === 'stateModal') {
+        document.getElementById('stateModal').classList.remove('active');
+    }
+}
 
-       // ==================== OPTIMIZED SEARCH CONFIGURATION ====================
- const searchBox = document.getElementById('searchBox');
-        const suggestionsBox = document.getElementById('searchSuggestions');
-        
+// ==================== OPTIMIZED SEARCH CONFIGURATION ====================
+const searchBox = document.getElementById('searchBox');
+const suggestionsBox = document.getElementById('searchSuggestions');
+
 const SEARCH_CONFIG = {
-    minChars: 3,            
-    debounceTime: 600,      
-    maxCacheSize: 100,       
-    maxCacheAge: 300000,     
-    apiThrottle: 1000         
+    minChars: 3,
+    debounceTime: 600,
+    maxCacheSize: 100,
+    maxCacheAge: 300000,
+    apiThrottle: 1000
 };
 
 let searchTimeout = null;
@@ -968,16 +968,16 @@ let isSearching = false;
 
 function getCachedResult(searchTerm) {
     const cached = apiCache.get(searchTerm.toLowerCase());
-    
+
     if (!cached) return null;
-    
+
     const age = Date.now() - cached.timestamp;
     if (age > SEARCH_CONFIG.maxCacheAge) {
         apiCache.delete(searchTerm.toLowerCase());
         return null;
     }
-    
-    console.log(`✅ Using cached result for "${searchTerm}" (age: ${Math.round(age/1000)}s)`);
+
+    console.log(`✅ Using cached result for "${searchTerm}" (age: ${Math.round(age / 1000)}s)`);
     return cached.data;
 }
 
@@ -987,26 +987,26 @@ function setCachedResult(searchTerm, data) {
         apiCache.delete(firstKey);
         console.log('🗑️ Cache limit reached, removed oldest entry');
     }
-    
+
     apiCache.set(searchTerm.toLowerCase(), {
         data: data,
         timestamp: Date.now()
     });
-    
+
     console.log(`💾 Cached result for "${searchTerm}" (total cached: ${apiCache.size})`);
 }
 
 function clearExpiredCache() {
     const now = Date.now();
     let removed = 0;
-    
+
     for (let [key, value] of apiCache.entries()) {
         if (now - value.timestamp > SEARCH_CONFIG.maxCacheAge) {
             apiCache.delete(key);
             removed++;
         }
     }
-    
+
     if (removed > 0) {
         console.log(`🗑️ Removed ${removed} expired cache entries`);
     }
@@ -1018,9 +1018,9 @@ setInterval(clearExpiredCache, 120000);
 
 searchBox.addEventListener('input', function (e) {
     const searchTerm = e.target.value.trim();
-    
+
     clearTimeout(searchTimeout);
-    
+
     if (searchTerm.length < SEARCH_CONFIG.minChars) {
         suggestionsBox.classList.remove('active');
         clearHighlightedLayers();
@@ -1028,9 +1028,9 @@ searchBox.addEventListener('input', function (e) {
         isSearching = false;
         return;
     }
-    
+
     showSearchLoading();
-    
+
     searchTimeout = setTimeout(() => {
         performOptimizedSearch(searchTerm);
     }, SEARCH_CONFIG.debounceTime);
@@ -1049,7 +1049,7 @@ function showSearchLoading() {
         </div>
     `;
     suggestionsBox.classList.add('active');
-    
+
     setTimeout(() => {
         startRotatingLoadingText('searchLoadingText');
     }, 100);
@@ -1063,14 +1063,14 @@ async function performOptimizedSearch(searchTerm) {
         pendingSearchTerm = searchTerm;
         return;
     }
-    
+
     isSearching = true;
-    
+
     try {
         const localResults = performLocalSearch(searchTerm);
-        
+
         const cachedApiResults = getCachedResult(searchTerm);
-        
+
         if (cachedApiResults !== null) {
             stopRotatingLoadingText();
             displayCombinedResults(localResults, cachedApiResults, searchTerm);
@@ -1078,25 +1078,25 @@ async function performOptimizedSearch(searchTerm) {
             checkPendingSearch();
             return;
         }
-        
+
         displayCombinedResults(localResults, [], searchTerm, true);
-        
+
         const timeSinceLastCall = Date.now() - lastAPICallTime;
         if (timeSinceLastCall < SEARCH_CONFIG.apiThrottle) {
             const waitTime = SEARCH_CONFIG.apiThrottle - timeSinceLastCall;
             console.log(`⏱️ Throttling API call, waiting ${waitTime}ms...`);
             await new Promise(resolve => setTimeout(resolve, waitTime));
         }
-        
+
         const apiResults = await fetchAPIResultsOptimized(searchTerm);
-        
+
         if (apiResults && apiResults.length > 0) {
             setCachedResult(searchTerm, apiResults);
         }
-        
+
         stopRotatingLoadingText();
         displayCombinedResults(localResults, apiResults, searchTerm);
-        
+
     } catch (error) {
         if (error.name !== 'AbortError') {
             console.error('Search error:', error);
@@ -1126,14 +1126,14 @@ async function fetchAPIResultsOptimized(query) {
         abortController.abort();
         console.log('🛑 Cancelled previous API request');
     }
-    
+
     abortController = new AbortController();
     lastAPICallTime = Date.now();
-    
+
     const apiUrl = `/api/search-proxy?q=${encodeURIComponent(query)}`;
-    
+
     console.log(`🌐 API Request: "${query}"`);
-    
+
     try {
         const response = await fetch(apiUrl, {
             signal: abortController.signal,
@@ -1250,7 +1250,7 @@ function performLocalSearch(searchTerm) {
     return results;
 }
 
-  function displayCombinedResults(localResults, apiResults, searchTerm, loading = false) {
+function displayCombinedResults(localResults, apiResults, searchTerm, loading = false) {
     clearHighlightedLayers();
 
     if (localResults.length === 0 && apiResults.length === 0 && !loading) {
@@ -1294,7 +1294,7 @@ function performLocalSearch(searchTerm) {
     if (apiResults.length > 0) {
         const cached = getCachedResult(searchTerm);
         const isCached = cached !== null;
-        
+
         html += `
             <div class="search-section">
                 <div class="search-section-header">
@@ -1329,7 +1329,7 @@ function performLocalSearch(searchTerm) {
                 </div>
             </div>
         `;
-        
+
         setTimeout(() => {
             startRotatingLoadingText('searchLoadingText');
         }, 100);
@@ -1342,26 +1342,26 @@ function performLocalSearch(searchTerm) {
 }
 
 function generateLocalResultCard(result, index, searchTerm) {
-            let icon = 'fa-map-pin';
-            let subtitle = result.state || '';
-            let badgeClass = 'badge-constituency';
-            let badgeText = 'Constituency';
+    let icon = 'fa-map-pin';
+    let subtitle = result.state || '';
+    let badgeClass = 'badge-constituency';
+    let badgeText = 'Constituency';
 
-            if (result.type === 'mp') {
-                icon = 'fa-landmark';
-                subtitle = `${result.party} • ${result.constituency}`;
-                badgeClass = 'badge-mp';
-                badgeText = 'Lok Sabha';
-            } else if (result.type === 'mla') {
-                icon = 'fa-user-tie';
-                subtitle = `${result.party} • ${result.assembly}`;
-                badgeClass = 'badge-mla';
-                badgeText = 'MLA';
-            }
+    if (result.type === 'mp') {
+        icon = 'fa-landmark';
+        subtitle = `${result.party} • ${result.constituency}`;
+        badgeClass = 'badge-mp';
+        badgeText = 'Lok Sabha';
+    } else if (result.type === 'mla') {
+        icon = 'fa-user-tie';
+        subtitle = `${result.party} • ${result.assembly}`;
+        badgeClass = 'badge-mla';
+        badgeText = 'MLA';
+    }
 
-            const highlightedName = highlightText(result.name, searchTerm);
+    const highlightedName = highlightText(result.name, searchTerm);
 
-            return `
+    return `
             <div class="suggestion-item local-result" data-index="${index}" data-source="local">
                 <div class="suggestion-icon">
                     <i class="fas ${icon}"></i>
@@ -1373,14 +1373,14 @@ function generateLocalResultCard(result, index, searchTerm) {
                 <span class="suggestion-type-badge ${badgeClass}">${badgeText}</span>
             </div>
         `;
-        }
+}
 
-        function generateAPIResultCard(result, index, searchTerm) {
-            const typeInfo = detectMemberType(result.type);
-            const highlightedName = highlightText(result.name, searchTerm);
-            const criminalBadge = result.criminal ? '<span class="criminal-badge"><i class="fas fa-exclamation-triangle"></i></span>' : '';
+function generateAPIResultCard(result, index, searchTerm) {
+    const typeInfo = detectMemberType(result.type);
+    const highlightedName = highlightText(result.name, searchTerm);
+    const criminalBadge = result.criminal ? '<span class="criminal-badge"><i class="fas fa-exclamation-triangle"></i></span>' : '';
 
-            return `
+    return `
             <div class="suggestion-item api-result" data-index="${index}" data-source="api">
                 ${result.image ? `
                     <div class="suggestion-image">
@@ -1409,320 +1409,320 @@ function generateLocalResultCard(result, index, searchTerm) {
                 <span class="suggestion-type-badge ${typeInfo.class}">${typeInfo.label}</span>
             </div>
         `;
-        }
+}
 
-        function detectMemberType(typeString) {
-            const lower = typeString.toLowerCase();
+function detectMemberType(typeString) {
+    const lower = typeString.toLowerCase();
 
-            if (lower.includes('lok sabha') || lower.includes('mp (lok sabha)')) {
-                return { type: 'MP', class: 'badge-mp', label: 'Lok Sabha' };
-            } else if (lower.includes('rajya sabha') || lower.includes('mp (rajya sabha)')) {
-                return { type: 'MP', class: 'badge-mp', label: 'Rajya Sabha' };
-            } else if (lower.includes('mla')) {
-                return { type: 'MLA', class: 'badge-mla', label: 'MLA' };
+    if (lower.includes('lok sabha') || lower.includes('mp (lok sabha)')) {
+        return { type: 'MP', class: 'badge-mp', label: 'Lok Sabha' };
+    } else if (lower.includes('rajya sabha') || lower.includes('mp (rajya sabha)')) {
+        return { type: 'MP', class: 'badge-mp', label: 'Rajya Sabha' };
+    } else if (lower.includes('mla')) {
+        return { type: 'MLA', class: 'badge-mla', label: 'MLA' };
+    } else {
+        return { type: 'MLA', class: 'badge-mla', label: 'Assembly' };
+    }
+}
+
+function highlightText(text, query) {
+    if (!query) return text;
+
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+function attachResultClickHandlers(localResults, apiResults) {
+    document.querySelectorAll('.suggestion-item.local-result').forEach((item, index) => {
+        item.addEventListener('click', () => {
+            const result = localResults[index];
+            if (result.type === 'constituency') {
+                selectSearchResult(result);
             } else {
-                return { type: 'MLA', class: 'badge-mla', label: 'Assembly' };
-            }
-        }
-
-        function highlightText(text, query) {
-            if (!query) return text;
-
-            const regex = new RegExp(`(${query})`, 'gi');
-            return text.replace(regex, '<span class="highlight">$1</span>');
-        }
-
-        function attachResultClickHandlers(localResults, apiResults) {
-            document.querySelectorAll('.suggestion-item.local-result').forEach((item, index) => {
-                item.addEventListener('click', () => {
-                    const result = localResults[index];
-                    if (result.type === 'constituency') {
-                        selectSearchResult(result);
-                    } else {
-                        const memberType = result.type === 'mp' ? 'MP' : 'MLA';
-                        navigateToMember(result.name, memberType, result.constituency || '', result.party || '');
-                    }
-                });
-            });
-
-            document.querySelectorAll('.suggestion-item.api-result').forEach((item, index) => {
-                item.addEventListener('click', () => {
-                    const result = apiResults[index];
-                    console.log("Result", result);
-                    const typeInfo = detectMemberType(result.type);
-
-                    let meow = '';
-                    let bhaw = '';
-
-                    if (result.link) {
-                        try {
-                            const url = new URL(result.link);
-
-                            const params = new URLSearchParams(url.search);
-                            meow = params.get('candidate_id') || '';
-
-                            const pathParts = url.pathname.split('/');
-                            const stateIndex = pathParts.findIndex(part => part && part !== '');
-                            if (stateIndex !== -1) {
-                                bhaw = pathParts[stateIndex];
-                            }
-                        } catch (error) {
-                            console.error('Error parsing URL:', error);
-                        }
-                    }
-
-                    console.log('meow:', meow);
-                    console.log('bhaw:', bhaw); 
-console.log("Result",result);
-console.log("typeInfo",typeInfo)
-                    navigateToMember(result.name, typeInfo.type, result.constituency || '', result.party || '', meow, bhaw);
-                });
-            });
-        }
-
-        function selectSearchResult(result) {
-            suggestionsBox.classList.remove('active');
-            searchBox.value = result.name;
-            clearHighlightedLayers();
-
-            if (result.feature) {
-                geojsonLayer.eachLayer(function (layer) {
-                    if (layer.feature === result.feature) {
-                        const bounds = layer.getBounds();
-                        const center = bounds.getCenter();
-
-                        map.flyTo(center, 9, {
-                            duration: 2,
-                            easeLinearity: 0.25
-                        });
-
-                        setTimeout(() => {
-                            if (selectedLayer && selectedLayer !== layer) {
-                                selectedLayer.setStyle(defaultStyle());
-                            }
-                            layer.setStyle(highlightStyle());
-                            selectedLayer = layer;
-                            showConstituencyDetails(result.feature);
-                        }, 2100);
-                    }
-                });
-            }
-        }
-
-        // ==================== RESET VIEW ====================
-
-        function resetView() {
-            searchBox.value = '';
-            suggestionsBox.classList.remove('active');
-            clearHighlightedLayers();
-
-            if (selectedLayer) {
-                selectedLayer.setStyle(defaultStyle());
-                selectedLayer = null;
-            }
-
-            document.getElementById('detailPanel').classList.remove('active');
-
-            map.flyTo([22.9734, 78.6569], 5, {
-                duration: 1.5,
-                easeLinearity: 0.5
-            });
-        }
-
-        // ==================== EVENT LISTENERS ====================
-
-        searchBox.addEventListener('keydown', function (e) {
-            const items = document.querySelectorAll('.suggestion-item');
-            const activeItem = document.querySelector('.suggestion-item.keyboard-active');
-
-            if (e.key === 'Escape') {
-                searchBox.value = '';
-                suggestionsBox.classList.remove('active');
-                clearHighlightedLayers();
-                return;
-            }
-
-            if (!items.length) return;
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (!activeItem) {
-                    items[0].classList.add('keyboard-active');
-                    items[0].scrollIntoView({ block: 'nearest' });
-                } else {
-                    const next = activeItem.nextElementSibling;
-                    if (next && next.classList.contains('suggestion-item')) {
-                        activeItem.classList.remove('keyboard-active');
-                        next.classList.add('keyboard-active');
-                        next.scrollIntoView({ block: 'nearest' });
-                    }
-                }
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (activeItem) {
-                    const prev = activeItem.previousElementSibling;
-                    if (prev && prev.classList.contains('suggestion-item')) {
-                        activeItem.classList.remove('keyboard-active');
-                        prev.classList.add('keyboard-active');
-                        prev.scrollIntoView({ block: 'nearest' });
-                    }
-                }
-            } else if (e.key === 'Enter' && activeItem) {
-                e.preventDefault();
-                activeItem.click();
+                const memberType = result.type === 'mp' ? 'MP' : 'MLA';
+                navigateToMember(result.name, memberType, result.constituency || '', result.party || '');
             }
         });
+    });
 
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('.search-container')) {
-                suggestionsBox.classList.remove('active');
-                clearHighlightedLayers();
+    document.querySelectorAll('.suggestion-item.api-result').forEach((item, index) => {
+        item.addEventListener('click', () => {
+            const result = apiResults[index];
+            console.log("Result", result);
+            const typeInfo = detectMemberType(result.type);
+
+            let meow = '';
+            let bhaw = '';
+
+            if (result.link) {
+                try {
+                    const url = new URL(result.link);
+
+                    const params = new URLSearchParams(url.search);
+                    meow = params.get('candidate_id') || '';
+
+                    const pathParts = url.pathname.split('/');
+                    const stateIndex = pathParts.findIndex(part => part && part !== '');
+                    if (stateIndex !== -1) {
+                        bhaw = pathParts[stateIndex];
+                    }
+                } catch (error) {
+                    console.error('Error parsing URL:', error);
+                }
+            }
+
+            console.log('meow:', meow);
+            console.log('bhaw:', bhaw);
+            console.log("Result", result);
+            console.log("typeInfo", typeInfo)
+            navigateToMember(result.name, typeInfo.type, result.constituency || '', result.party || '', meow, bhaw);
+        });
+    });
+}
+
+function selectSearchResult(result) {
+    suggestionsBox.classList.remove('active');
+    searchBox.value = result.name;
+    clearHighlightedLayers();
+
+    if (result.feature) {
+        geojsonLayer.eachLayer(function (layer) {
+            if (layer.feature === result.feature) {
+                const bounds = layer.getBounds();
+                const center = bounds.getCenter();
+
+                map.flyTo(center, 9, {
+                    duration: 2,
+                    easeLinearity: 0.25
+                });
+
+                setTimeout(() => {
+                    if (selectedLayer && selectedLayer !== layer) {
+                        selectedLayer.setStyle(defaultStyle());
+                    }
+                    layer.setStyle(highlightStyle());
+                    selectedLayer = layer;
+                    showConstituencyDetails(result.feature);
+                }, 2100);
             }
         });
+    }
+}
 
-        setInterval(() => {
-            if (apiCache.size > 50) {
-                apiCache.clear();
-                console.log('🗑️ Search cache cleared');
+// ==================== RESET VIEW ====================
+
+function resetView() {
+    searchBox.value = '';
+    suggestionsBox.classList.remove('active');
+    clearHighlightedLayers();
+
+    if (selectedLayer) {
+        selectedLayer.setStyle(defaultStyle());
+        selectedLayer = null;
+    }
+
+    document.getElementById('detailPanel').classList.remove('active');
+
+    map.flyTo([22.9734, 78.6569], 5, {
+        duration: 1.5,
+        easeLinearity: 0.5
+    });
+}
+
+// ==================== EVENT LISTENERS ====================
+
+searchBox.addEventListener('keydown', function (e) {
+    const items = document.querySelectorAll('.suggestion-item');
+    const activeItem = document.querySelector('.suggestion-item.keyboard-active');
+
+    if (e.key === 'Escape') {
+        searchBox.value = '';
+        suggestionsBox.classList.remove('active');
+        clearHighlightedLayers();
+        return;
+    }
+
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!activeItem) {
+            items[0].classList.add('keyboard-active');
+            items[0].scrollIntoView({ block: 'nearest' });
+        } else {
+            const next = activeItem.nextElementSibling;
+            if (next && next.classList.contains('suggestion-item')) {
+                activeItem.classList.remove('keyboard-active');
+                next.classList.add('keyboard-active');
+                next.scrollIntoView({ block: 'nearest' });
             }
-        }, 300000);
+        }
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (activeItem) {
+            const prev = activeItem.previousElementSibling;
+            if (prev && prev.classList.contains('suggestion-item')) {
+                activeItem.classList.remove('keyboard-active');
+                prev.classList.add('keyboard-active');
+                prev.scrollIntoView({ block: 'nearest' });
+            }
+        }
+    } else if (e.key === 'Enter' && activeItem) {
+        e.preventDefault();
+        activeItem.click();
+    }
+});
 
-        // ==================== PRODUCTION SECURITY MEASURES ====================
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('.search-container')) {
+        suggestionsBox.classList.remove('active');
+        clearHighlightedLayers();
+    }
+});
 
-        if (window.IS_PRODUCTION) {
-            document.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                return false;
-            }, true);
+setInterval(() => {
+    if (apiCache.size > 50) {
+        apiCache.clear();
+        console.log('🗑️ Search cache cleared');
+    }
+}, 300000);
 
-            document.addEventListener('mousedown', function(e) {
-                if (e.button === 2) { 
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
-            }, true);
+// ==================== PRODUCTION SECURITY MEASURES ====================
 
-            document.addEventListener('keydown', function(e) {
-                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-                const ctrlOrCmd = e.ctrlKey || (isMac && e.metaKey);
+if (window.IS_PRODUCTION) {
+    document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }, true);
 
-                if (e.keyCode === 123) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
+    document.addEventListener('mousedown', function (e) {
+        if (e.button === 2) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
+    }, true);
 
-                if (ctrlOrCmd && e.shiftKey && e.keyCode === 73) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
+    document.addEventListener('keydown', function (e) {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const ctrlOrCmd = e.ctrlKey || (isMac && e.metaKey);
 
-                if (ctrlOrCmd && e.shiftKey && e.keyCode === 74) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
+        if (e.keyCode === 123) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
 
-                if (ctrlOrCmd && e.shiftKey && e.keyCode === 67) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
+        if (ctrlOrCmd && e.shiftKey && e.keyCode === 73) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
 
-                if (ctrlOrCmd && e.keyCode === 85) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
+        if (ctrlOrCmd && e.shiftKey && e.keyCode === 74) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
 
-                if (ctrlOrCmd && e.shiftKey && e.keyCode === 75) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
+        if (ctrlOrCmd && e.shiftKey && e.keyCode === 67) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
 
-                if (e.keyCode === 122) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
+        if (ctrlOrCmd && e.keyCode === 85) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
 
-                if (ctrlOrCmd && e.shiftKey && e.keyCode === 46) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return false;
-                }
-            }, true);
+        if (ctrlOrCmd && e.shiftKey && e.keyCode === 75) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
 
-            let devtools = {
-                open: false,
-                methods: {
-                    size: false,
-                    debugger: false,
-                    performance: false
-                }
-            };
+        if (e.keyCode === 122) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
 
-            const checkWindowSize = () => {
-                const threshold = 200;
-                const sizeOpen = window.outerHeight - window.innerHeight > threshold ||
-                               window.outerWidth - window.innerWidth > threshold;
-                devtools.methods.size = sizeOpen;
-            };
+        if (ctrlOrCmd && e.shiftKey && e.keyCode === 46) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
+    }, true);
 
-            const checkDebugger = () => {
-                const start = performance.now();
-                debugger; 
-                const end = performance.now();
-                devtools.methods.debugger = end - start > 100;
-            };
+    let devtools = {
+        open: false,
+        methods: {
+            size: false,
+            debugger: false,
+            performance: false
+        }
+    };
 
-            const checkPerformance = () => {
-                const start = performance.now();
-                for (let i = 0; i < 1000; i++) {
-                }
-                const end = performance.now();
-                devtools.methods.performance = end - start > 50;
-            };
+    const checkWindowSize = () => {
+        const threshold = 200;
+        const sizeOpen = window.outerHeight - window.innerHeight > threshold ||
+            window.outerWidth - window.innerWidth > threshold;
+        devtools.methods.size = sizeOpen;
+    };
 
-            const checkDevTools = () => {
-                checkWindowSize();
-                checkDebugger();
-                checkPerformance();
+    const checkDebugger = () => {
+        const start = performance.now();
+        debugger;
+        const end = performance.now();
+        devtools.methods.debugger = end - start > 100;
+    };
 
-                const wasOpen = devtools.open;
-                devtools.open = devtools.methods.size || devtools.methods.debugger || devtools.methods.performance;
+    const checkPerformance = () => {
+        const start = performance.now();
+        for (let i = 0; i < 1000; i++) {
+        }
+        const end = performance.now();
+        devtools.methods.performance = end - start > 50;
+    };
 
-                if (devtools.open && !wasOpen) {
-                    console.clear();
-                    console.log('%c🚫 Developer tools detected. Access restricted.', 'color: red; font-size: 18px; font-weight: bold;');
-                    console.log('%cThis action violates our terms of service.', 'color: orange; font-size: 14px;');
+    const checkDevTools = () => {
+        checkWindowSize();
+        checkDebugger();
+        checkPerformance();
 
-                    showSecurityWarning();
-                } else if (!devtools.open && wasOpen) {
-                    hideSecurityWarning();
-                }
-            };
+        const wasOpen = devtools.open;
+        devtools.open = devtools.methods.size || devtools.methods.debugger || devtools.methods.performance;
 
-            const showSecurityWarning = () => {
-                let warning = document.getElementById('security-warning');
-                if (!warning) {
-                    warning = document.createElement('div');
-                    warning.id = 'security-warning';
-                    warning.innerHTML = `
+        if (devtools.open && !wasOpen) {
+            console.clear();
+            console.log('%c🚫 Developer tools detected. Access restricted.', 'color: red; font-size: 18px; font-weight: bold;');
+            console.log('%cThis action violates our terms of service.', 'color: orange; font-size: 14px;');
+
+            showSecurityWarning();
+        } else if (!devtools.open && wasOpen) {
+            hideSecurityWarning();
+        }
+    };
+
+    const showSecurityWarning = () => {
+        let warning = document.getElementById('security-warning');
+        if (!warning) {
+            warning = document.createElement('div');
+            warning.id = 'security-warning';
+            warning.innerHTML = `
                         <div style="
                             position: fixed;
                             top: 0;
@@ -1745,117 +1745,117 @@ console.log("typeInfo",typeInfo)
                             </div>
                         </div>
                     `;
-                    document.body.appendChild(warning);
-                }
-                warning.style.display = 'flex';
-            };
-
-            const hideSecurityWarning = () => {
-                const warning = document.getElementById('security-warning');
-                if (warning) {
-                    warning.style.display = 'none';
-                }
-            };
-
-            setInterval(checkDevTools, 100);
-
-            const originalConsole = {
-                log: console.log,
-                warn: console.warn,
-                error: console.error,
-                info: console.info,
-                debug: console.debug,
-                clear: console.clear
-            };
-
-            const createSecureConsole = () => ({
-                log: function(...args) {
-                    if (devtools.open) {
-                        originalConsole.log('%c[SECURE] Console access restricted', 'color: red; font-weight: bold;');
-                        return;
-                    }
-                    originalConsole.log.apply(console, args);
-                },
-                warn: function(...args) {
-                    if (devtools.open) {
-                        return;
-                    }
-                    originalConsole.warn.apply(console, args);
-                },
-                error: function(...args) {
-                    if (devtools.open) {
-                        return;
-                    }
-                    originalConsole.error.apply(console, args);
-                },
-                info: function(...args) {
-                    if (devtools.open) {
-                        return;
-                    }
-                    originalConsole.info.apply(console, args);
-                },
-                debug: function(...args) {
-                    if (devtools.open) {
-                        return;
-                    }
-                    originalConsole.debug.apply(console, args);
-                },
-                clear: function() {
-                    if (devtools.open) {
-                        return;
-                    }
-                    originalConsole.clear.apply(console, []);
-                }
-            });
-
-            Object.defineProperty(window, 'console', {
-                get: function() {
-                    return devtools.open ? createSecureConsole() : originalConsole;
-                },
-                set: function() {}
-            });
-
-            window.eval = function() {
-                throw new Error('eval() is disabled for security reasons');
-            };
-
-            document.addEventListener('selectstart', function(e) {
-                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-            }, true);
-
-            document.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }, true);
-
-            document.addEventListener('drop', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }, true);
-
-            document.addEventListener('copy', function(e) {
-                if (devtools.open) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-            }, true);
-
-            document.addEventListener('paste', function(e) {
-                if (devtools.open) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-            }, true);
-
-            console.clear();
-            console.log('%c🔒 Enhanced Production Security Active', 'color: green; font-size: 16px; font-weight: bold;');
-            console.log('%c⚠️ Developer tools are monitored and restricted', 'color: orange; font-size: 14px;');
+            document.body.appendChild(warning);
         }
+        warning.style.display = 'flex';
+    };
+
+    const hideSecurityWarning = () => {
+        const warning = document.getElementById('security-warning');
+        if (warning) {
+            warning.style.display = 'none';
+        }
+    };
+
+    setInterval(checkDevTools, 100);
+
+    const originalConsole = {
+        log: console.log,
+        warn: console.warn,
+        error: console.error,
+        info: console.info,
+        debug: console.debug,
+        clear: console.clear
+    };
+
+    const createSecureConsole = () => ({
+        log: function (...args) {
+            if (devtools.open) {
+                originalConsole.log('%c[SECURE] Console access restricted', 'color: red; font-weight: bold;');
+                return;
+            }
+            originalConsole.log.apply(console, args);
+        },
+        warn: function (...args) {
+            if (devtools.open) {
+                return;
+            }
+            originalConsole.warn.apply(console, args);
+        },
+        error: function (...args) {
+            if (devtools.open) {
+                return;
+            }
+            originalConsole.error.apply(console, args);
+        },
+        info: function (...args) {
+            if (devtools.open) {
+                return;
+            }
+            originalConsole.info.apply(console, args);
+        },
+        debug: function (...args) {
+            if (devtools.open) {
+                return;
+            }
+            originalConsole.debug.apply(console, args);
+        },
+        clear: function () {
+            if (devtools.open) {
+                return;
+            }
+            originalConsole.clear.apply(console, []);
+        }
+    });
+
+    Object.defineProperty(window, 'console', {
+        get: function () {
+            return devtools.open ? createSecureConsole() : originalConsole;
+        },
+        set: function () { }
+    });
+
+    window.eval = function () {
+        throw new Error('eval() is disabled for security reasons');
+    };
+
+    document.addEventListener('selectstart', function (e) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    }, true);
+
+    document.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }, true);
+
+    document.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }, true);
+
+    document.addEventListener('copy', function (e) {
+        if (devtools.open) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    }, true);
+
+    document.addEventListener('paste', function (e) {
+        if (devtools.open) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    }, true);
+
+    console.clear();
+    console.log('%c🔒 Enhanced Production Security Active', 'color: green; font-size: 16px; font-weight: bold;');
+    console.log('%c⚠️ Developer tools are monitored and restricted', 'color: orange; font-size: 14px;');
+}

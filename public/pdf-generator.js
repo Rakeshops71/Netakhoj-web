@@ -26,7 +26,64 @@ class PDFGenerator {
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
-          removeContainer: true
+          removeContainer: true,
+          logging: true, // Enable logging for debug
+          windowWidth: document.documentElement.offsetWidth,
+          onclone: (clonedDoc) => {
+            console.log('PDF Generator: Cloning document for capture...');
+            const clonedBody = clonedDoc.body;
+            const clonedContent = clonedDoc.getElementById('content');
+
+            // 1. Force Body Styles
+            clonedBody.classList.add('print-mode');
+            clonedBody.style.backgroundColor = '#ffffff';
+            clonedBody.style.backgroundImage = 'none';
+            clonedBody.style.color = '#000000';
+
+            // 2. Aggressive Content Reset
+            if (clonedContent) {
+              // Reset container
+              clonedContent.style.opacity = '1';
+              clonedContent.style.visibility = 'visible';
+              clonedContent.style.display = 'block';
+              clonedContent.style.backgroundColor = '#ffffff';
+              clonedContent.style.color = '#000000';
+
+              // 3. Iterate ALL elements to strip problematic styles
+              const allElements = clonedContent.getElementsByTagName('*');
+              for (let i = 0; i < allElements.length; i++) {
+                const el = allElements[i];
+                const style = window.getComputedStyle(el); // Note: this might be expensive in clone, but safer for style access
+
+                // Force visibility
+                el.style.opacity = '1';
+                el.style.visibility = 'visible';
+
+                // Force text color if it looks light (simple heuristic or just force black)
+                // We'll force black for now to ensure readability
+                el.style.color = '#000000';
+                el.style.textShadow = 'none';
+
+                // Remove filters and backdrops which break html2canvas frequently
+                el.style.filter = 'none';
+                el.style.backdropFilter = 'none';
+                el.style.boxShadow = 'none';
+
+                // Handle gradients/backgrounds
+                // If it has a background image/gradient, we might want to keep it IF it's light, 
+                // but safer to kill it for "blank/black" issues. 
+                // Let's rely on CSS rules for backgrounds, but enforce text contrast.
+
+                // Special case for our cards
+                if (el.classList.contains('analysis-insight-card') ||
+                  el.classList.contains('analysis-summary-container')) {
+                  el.style.backgroundColor = '#ffffff';
+                  el.style.backgroundImage = 'none';
+                  el.style.border = '1px solid #ccc';
+                }
+              }
+            }
+          }
         },
         jsPDF: {
           unit: 'mm',
@@ -41,13 +98,13 @@ class PDFGenerator {
       // Generate PDF
       await html2pdf().set(options).from(content).save();
 
-      this.hideLoading();
       this.showSuccess('PDF generated successfully!');
 
     } catch (error) {
       console.error('PDF Generation Error:', error);
-      this.hideLoading();
       this.showError('Failed to generate PDF: ' + error.message);
+    } finally {
+      this.hideLoading();
     }
   }
 
@@ -285,7 +342,10 @@ class PDFGenerator {
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
-          removeContainer: true
+          removeContainer: true,
+          scrollY: 0,
+          windowWidth: document.documentElement.offsetWidth,
+          enableLinks: true
         },
         jsPDF: {
           unit: 'mm',
